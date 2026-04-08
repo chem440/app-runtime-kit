@@ -15,6 +15,28 @@ npm ci
 npm run ci:platform
 ```
 
+## First-Time Standalone Setup
+
+For standalone usage, initialize a local runtime configuration once:
+
+```bash
+npm run setup:standalone
+```
+
+This writes:
+- `.app-runtime-kit/standalone.config.json`
+
+Defaults currently align with decisions already made in the `lo` app integration profile:
+- `repo`: `lo`
+- `branch`: `staging`
+- `path`: `docs/operations/PLATFORM_DEPENDENCY_LEDGER.md`
+
+To overwrite an existing config:
+
+```bash
+npm run setup:standalone -- --force=true
+```
+
 ## CI contract
 
 The required CI checks are:

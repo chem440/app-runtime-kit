@@ -1,0 +1,22 @@
+{
+  "profileId": "lo-defaults",
+  "description": "Default standalone decisions aligned to the current lo app integration.",
+  "cache": {
+    "provider": "vercel-kv",
+    "module": "@vercel/kv",
+    "notes": "Use platform cache facade; host app provides runtime env + credentials."
+  },
+  "telemetry": {
+    "keyNamespaceMode": "provider-tagged-compat",
+    "notes": "Current compatibility mode keeps OpenAI-prefixed token keys."
+  },
+  "services": {
+    "settingsAdapter": "host-app",
+    "subscriptionAdapter": "host-app"
+  },
+  "decisionReference": {
+    "repo": "lo",
+    "branch": "staging",
+    "path": "docs/operations/PLATFORM_DEPENDENCY_LEDGER.md"
+  }
+}

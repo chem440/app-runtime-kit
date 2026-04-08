@@ -5,6 +5,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
+    "setup:standalone": "node scripts/setup-standalone.mjs",
     "build:dist": "rm -rf dist && tsc -p tsconfig.build.json && node scripts/fix-dist-import-extensions.mjs",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
