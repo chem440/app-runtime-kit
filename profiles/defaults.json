@@ -1,6 +1,6 @@
 {
-  "profileId": "lo-defaults",
-  "description": "Default standalone decisions aligned to the current lo app integration.",
+  "profileId": "defaults",
+  "description": "Default standalone runtime decisions.",
   "cache": {
     "provider": "vercel-kv",
     "module": "@vercel/kv",
@@ -11,12 +11,7 @@
     "notes": "Current compatibility mode keeps OpenAI-prefixed token keys."
   },
   "services": {
-    "settingsAdapter": "host-app",
-    "subscriptionAdapter": "host-app"
-  },
-  "decisionReference": {
-    "repo": "lo",
-    "branch": "staging",
-    "path": "docs/operations/PLATFORM_DEPENDENCY_LEDGER.md"
+    "settingsAdapter": "host-runtime",
+    "subscriptionAdapter": "host-runtime"
   }
 }

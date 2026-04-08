@@ -3,8 +3,8 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-const PROFILE_FILE = path.join(process.cwd(), 'profiles', 'lo-defaults.json')
-const OUTPUT_DIR = path.join(process.cwd(), '.app-runtime-kit')
+const PROFILE_FILE = path.join(process.cwd(), 'profiles', 'defaults.json')
+const OUTPUT_DIR = path.join(process.cwd(), '.runtime-kit')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'standalone.config.json')
 
 function parseArgs(argv) {
@@ -53,7 +53,6 @@ async function main() {
       telemetry: profile.telemetry,
       services: profile.services,
     },
-    decisionReference: profile.decisionReference,
   }
 
   await fs.mkdir(OUTPUT_DIR, { recursive: true })
@@ -61,10 +60,6 @@ async function main() {
 
   console.log('[setup-standalone] Standalone config initialized.')
   console.log(`[setup-standalone] Wrote: ${OUTPUT_FILE}`)
-  console.log('[setup-standalone] Linked decision source:')
-  console.log(
-    `  ${profile.decisionReference.repo}:${profile.decisionReference.branch}/${profile.decisionReference.path}`
-  )
 }
 
 main().catch((error) => {

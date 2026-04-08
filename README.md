@@ -24,12 +24,9 @@ npm run setup:standalone
 ```
 
 This writes:
-- `.app-runtime-kit/standalone.config.json`
+- `.runtime-kit/standalone.config.json`
 
-Defaults currently align with decisions already made in the `lo` app integration profile:
-- `repo`: `lo`
-- `branch`: `staging`
-- `path`: `docs/operations/PLATFORM_DEPENDENCY_LEDGER.md`
+Defaults come from `profiles/defaults.json` and are intentionally platform-generic.
 
 To overwrite an existing config:
 
