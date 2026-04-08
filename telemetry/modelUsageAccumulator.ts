@@ -1,4 +1,4 @@
-import { kv } from '@app-runtime-kit/core/redis/kv'
+import { kv } from '../cache/kv'
 
 const MODEL_TTL_SECONDS = 7 * 24 * 60 * 60
 

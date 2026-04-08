@@ -1,6 +1,12 @@
-# @app-runtime-kit/core (split bootstrap)
+# @app-runtime-kit/core
 
-This repo is bootstrapped from `packages/platform` in the app monorepo.
+Runtime foundation kit for app-layer concerns:
+- cache/kv wrappers
+- telemetry keying + accumulation helpers
+- settings + subscription service contracts
+- SWR primitives
+- report contracts/helpers
+- audio UI primitives
 
 ## Verify
 
