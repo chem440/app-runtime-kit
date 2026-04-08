@@ -1,0 +1,28 @@
+name: release-guard
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  verify-release-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify tag matches package version
+        run: node scripts/verify-release-tag.mjs
+
+      - name: Platform CI
+        run: npm run ci:platform
