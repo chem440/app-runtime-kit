@@ -1,0 +1,372 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// =============================================================================
+// SYSTEM MODELS - Core infrastructure
+// =============================================================================
+
+/// Unified user identity - merges old account, User, Candidate tables
+/// One person = one sys_user row
+/// Created by: auth-provider webhook (user.created) OR first authenticated API call
+model sys_user {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clerk_id   String  @unique(map: "sys_user_clerk_id_key") // Auth-provider subject identifier
+  email      String
+  first_name String?
+  last_name  String?
+  image_url  String? // Auth-provider profile image URL
+
+  // Authorization (from User)
+  role        Role     @default(TEACHER)
+  permissions String[] @default([]) // ["MENTOR", ...]
+
+  // Billing (from account)
+  tier                   String    @default("FREE") // PARTNER|FREE|TIER_1|TIER_2|ENTERPRISE
+  status                 String    @default("ACTIVE") // ACTIVE|SUSPENDED|DELETED
+  stripe_customer_id     String?
+  stripe_subscription_id String?   @db.VarChar(100)
+  subscription_status    String?   @db.VarChar(20) // 'active' | 'past_due' | 'ending' | null
+  period_ends_at         DateTime?
+  cancel_at              DateTime?
+  payment_failed_at      DateTime?
+  stripe_verified_at     DateTime?
+  has_open_dispute       Boolean   @default(false)
+
+  // Mentorship (from Candidate)
+  mentor_id String? @db.Uuid // Who mentors this user?
+  // sis_id              String?   // TODO: School system ID (future)
+
+  // Tracking
+  client_ip  String?
+  user_agent String?
+
+  // Timestamps
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  mentor             sys_user?             @relation("MentorRelation", fields: [mentor_id], references: [id])
+  mentees            sys_user[]            @relation("MentorRelation")
+  preferences        sys_user_preference[]
+  notifications      sys_notification[]
+
+  @@index([clerk_id], map: "sys_user_clerk_id_idx")
+  @@index([email])
+  @@index([role])
+  @@index([mentor_id])
+  @@index([deleted_at])
+  @@map("sys_user")
+}
+
+/// User settings and preferences
+model sys_user_preference {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  name       String   @db.VarChar(256)
+  value      String   @db.VarChar(256)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user       sys_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, name])
+  @@index([user_id])
+  @@map("sys_user_preference")
+}
+
+/// In-app notifications
+model sys_notification {
+  id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String              @db.Uuid
+  type       NotificationType
+  title      String              @db.VarChar(200)
+  body       String?             @db.VarChar(500)
+  link_url   String?             @db.VarChar(500)
+  read       Boolean             @default(false)
+  created_at DateTime            @default(now())
+  comment_id String?             @db.Uuid
+  mentee_id  String?             @db.Uuid // Source mentee (for bulk delete on mentor removal)
+  tag_id     String?             @db.Uuid
+  user       sys_user            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, read])
+  @@index([user_id, created_at])
+  @@index([comment_id])
+  @@index([mentee_id])
+  @@index([tag_id])
+  @@map("sys_notification")
+}
+
+/// Security audit log for tracking rate limiting and abuse patterns
+model sys_security_audit {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_type String   @db.VarChar(50)
+  identifier String   @db.VarChar(255)
+  tier       String?  @db.VarChar(50)
+  metadata   Json     @default("{}")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([identifier])
+  @@index([event_type])
+  @@index([created_at])
+  @@map("sys_security_audit")
+}
+
+/// Content standards discovered/seeded
+model sys_content_standard {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lesson_id       String?            @db.Uuid
+  session_id      String?            @db.Uuid
+  standard_type   String             @db.VarChar(100)
+  code            String?            @db.VarChar(100)
+  description     String
+  source_document String?            @db.Text
+  source          String?            @db.VarChar(30)
+  prompt_type     String?            @db.VarChar(20)
+  created_at      DateTime           @default(now()) @db.Timestamptz(6)
+
+  @@index([lesson_id])
+  @@index([session_id])
+  @@index([standard_type])
+  @@map("sys_content_standard")
+}
+
+/// Standards frameworks (AI-discovered, seeded, or user-added)
+model sys_content_framework {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String    @unique @db.VarChar(255)
+  source        String    @default("AI_DISCOVERED") @db.VarChar(50)
+  description   String?
+  content       String?   @db.Text
+  identified_at DateTime  @default(now()) @db.Timestamptz(6)
+  verified_at   DateTime? @db.Timestamptz(6)
+  usage_count   Int       @default(0)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([name])
+  @@index([source])
+  @@index([identified_at])
+  @@map("sys_content_framework")
+}
+
+// =============================================================================
+// SYSTEM - BILLING
+// =============================================================================
+
+/// Immutable subscription history - one record per Stripe subscription
+model sys_billing_subscription {
+  id                 String    @id // sub_xxxxx from Stripe
+  user_id            String    @db.VarChar(255)
+  stripe_customer_id String    @db.VarChar(100)
+  stripe_product_id  String    @db.VarChar(100)
+  started_at         DateTime
+  period_end         DateTime
+  canceled_at        DateTime?
+  ends_at            DateTime?
+  superseded_by      String?   @db.VarChar(100)
+  superseded_at      DateTime?
+  created_at         DateTime  @default(now())
+
+  @@index([user_id])
+  @@index([stripe_customer_id])
+  @@map("sys_billing_subscription")
+}
+
+/// Stripe webhook event log
+model sys_billing_webhook {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id     String   @unique @db.VarChar(100)
+  event_type   String   @db.VarChar(100)
+  customer_id  String?  @db.VarChar(100)
+  user_id      String?  @db.VarChar(255)
+  payload      Json
+  processed_at DateTime @default(now())
+  error        String?  @db.Text
+
+  @@index([customer_id])
+  @@index([user_id])
+  @@index([event_type])
+  @@index([processed_at])
+  @@map("sys_billing_webhook")
+}
+
+// =============================================================================
+// SYSTEM - TELEMETRY
+// =============================================================================
+
+/// All-time AI usage totals per user
+model sys_telemetry_user_total {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id             String   @unique @db.VarChar(255)
+  total_cost_cents    Int      @default(0)
+  total_input_tokens  Int      @default(0)
+  total_output_tokens Int      @default(0)
+  total_audio_ms      Int      @default(0)
+  total_tts_chars     Int      @default(0)
+  updated_at          DateTime @updatedAt
+
+  @@index([user_id])
+  @@map("sys_telemetry_user_total")
+}
+
+/// Current week's tier-tracked caps
+model sys_telemetry_weekly_cap {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String   @unique @db.VarChar(255)
+  week_start           DateTime @db.Date
+  voice_minutes_used   Int      @default(0) // Computed: ROUND((voice_stt_ms / 60000) + (voice_tts_chars / 750))
+  voice_stt_ms         Int      @default(0) // Granular STT audio duration in milliseconds
+  voice_tts_chars      Int      @default(0) // Granular TTS character count
+  voice_sessions_used  Int      @default(0)
+  lesson_analyses_used Int      @default(0)
+  chat_messages_used   Int      @default(0)
+  updated_at           DateTime @updatedAt
+
+  @@index([user_id])
+  @@map("sys_telemetry_weekly_cap")
+}
+
+/// All-time per-capability totals
+model sys_telemetry_capability {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String   @db.VarChar(255)
+  capability    String   @db.VarChar(50)
+  call_count    Int      @default(0)
+  input_tokens  Int      @default(0)
+  output_tokens Int      @default(0)
+  audio_ms      Int      @default(0)
+  tts_chars     Int      @default(0)
+  cost_cents    Int      @default(0)
+  updated_at    DateTime @updatedAt
+
+  @@unique([user_id, capability])
+  @@index([user_id])
+  @@index([capability])
+  @@map("sys_telemetry_capability")
+}
+
+/// Per-user, per-capability weekly counts for dashboard trends
+/// Cleanup: Drop records older than 52 weeks via scheduled job
+model sys_telemetry_capability_weekly {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.VarChar(255)
+  capability String   @db.VarChar(50)
+  week       String   @db.VarChar(8) // ISO week: '2025-W12'
+  call_count Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([user_id, capability, week])
+  @@index([user_id, capability])
+  @@index([week])
+  @@map("sys_telemetry_capability_weekly")
+}
+
+/// Platform-wide monthly aggregates
+model sys_telemetry_monthly {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  capability    String   @db.VarChar(50)
+  month         String   @db.VarChar(7)
+  call_count    Int      @default(0)
+  input_tokens  Int      @default(0)
+  output_tokens Int      @default(0)
+  audio_ms      Int      @default(0)
+  tts_chars     Int      @default(0)
+  cost_cents    Int      @default(0)
+  unique_users  Int      @default(0)
+  created_at    DateTime @default(now())
+
+  @@unique([capability, month])
+  @@index([month])
+  @@map("sys_telemetry_monthly")
+}
+
+/// Tier change log
+model sys_telemetry_tier_change {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String   @db.VarChar(255)
+  from_tier       String?  @db.VarChar(20)
+  to_tier         String   @db.VarChar(20)
+  reason          String   @db.VarChar(50)
+  stripe_event_id String?  @db.VarChar(100)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([user_id])
+  @@index([created_at])
+  @@index([reason])
+  @@index([stripe_event_id])
+  @@map("sys_telemetry_tier_change")
+}
+
+/// Subscription lifecycle events
+model sys_telemetry_subscription {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String   @db.VarChar(255)
+  event_type    String   @db.VarChar(50)
+  tier          String?  @db.VarChar(20)
+  operation     String?  @db.VarChar(50)
+  reason        String?  @db.VarChar(50)
+  from_state    String?  @db.VarChar(50)
+  to_state      String?  @db.VarChar(50)
+  error_message String?  @db.Text
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([user_id])
+  @@index([event_type])
+  @@index([created_at])
+  @@map("sys_telemetry_subscription")
+}
+
+/// Cached MRR snapshot
+model sys_telemetry_mrr {
+  id                   Int      @id @default(1)
+  mrr                  Float    @default(0)
+  active_subscriptions Int      @default(0)
+  by_tier              Json     @default("[]")
+  fetched_at           DateTime @default(now())
+  is_estimate          Boolean  @default(false)
+
+  @@map("sys_telemetry_mrr")
+}
+
+/// Cached admin report query results
+/// Used by /api/admin/reports for expensive aggregations
+model sys_report_cache {
+  cache_key  String   @id @db.VarChar(255) // Format: type:period:options
+  query_type String   @db.VarChar(100) // e.g., 'engagementTrends', 'databaseSize'
+  period     String   @db.VarChar(20) // e.g., '7d', '30d'
+  data       Json // The cached query result
+  fetched_at DateTime @default(now())
+
+  @@index([query_type])
+  @@index([fetched_at])
+  @@map("sys_report_cache")
+}
+
+// ENUMS
+// =============================================================================
+
+enum Role {
+  TEACHER
+  SUPER_ADMIN
+}
+
+enum NotificationType {
+  MENTOR_TAG_CREATED
+  MENTOR_COMMENT_ADDED
+  MENTOR_INVITE_RECEIVED
+  MENTOR_INVITE_ACCEPTED
+  IMPROVEMENT_ITEM_STATUS_CHANGED
+  MENTOR_INVITE_SENT
+  MENTOR_COMMENT_RECEIVED
+  MENTOR_FEEDBACK_GIVEN
+}

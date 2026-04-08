@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@app-runtime-kit/core": ["./index.ts"],
+      "@app-runtime-kit/core/*": ["./*"]
+    }
+  },
+  "include": [
+    "index.ts",
+    "audio/**/*.ts",
+    "audio/**/*.tsx",
+    "redis/**/*.ts",
+    "reports/**/*.ts",
+    "settings/**/*.ts",
+    "settings/**/*.tsx",
+    "shared/**/*.ts",
+    "swr/**/*.ts",
+    "swr/**/*.tsx",
+    "telemetry/**/*.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
