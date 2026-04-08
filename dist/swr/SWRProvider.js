@@ -1,7 +1,7 @@
 'use client';
 import { jsx as _jsx } from "react/jsx-runtime";
 import { SWRConfig } from 'swr-package';
-import { DEDUPING_INTERVALS } from './dedupingConfig';
+import { DEDUPING_INTERVALS } from './dedupingConfig.js';
 function getHttpStatus(error) {
     if (!error || typeof error !== 'object')
         return undefined;

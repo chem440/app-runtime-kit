@@ -1,6 +1,6 @@
 import { kv as vercelKv } from '@vercel/kv';
-import { getMockRedis, resetMockRedis, shouldUseMockRedis } from './mock';
-import { recordRedisOp } from './metrics';
+import { getMockRedis, resetMockRedis, shouldUseMockRedis } from './mock.js';
+import { recordRedisOp } from './metrics.js';
 const useMock = shouldUseMockRedis();
 const rawKv = useMock ? getMockRedis() : vercelKv;
 const TRACKED_KV_OPS = new Set([

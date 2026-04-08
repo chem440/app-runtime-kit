@@ -1,4 +1,4 @@
-import { resolveSettingsTierBranding } from './tierBrandingCore';
+import { resolveSettingsTierBranding } from './tierBrandingCore.js';
 const UNCONFIGURED_ERROR = 'Settings service adapter is not configured';
 const EMPTY_ACCOUNT_INFO = {
     tier: 'unknown',

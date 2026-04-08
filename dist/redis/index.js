@@ -1,3 +1,3 @@
-export * from './kv';
-export * from './mock';
-export * from './metrics';
+export * from './kv.js';
+export * from './mock.js';
+export * from './metrics.js';

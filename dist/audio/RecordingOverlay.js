@@ -1,7 +1,7 @@
 'use client';
 import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
 import { useEffect, useState, useRef } from 'react';
-import { cn } from '../shared/cn';
+import { cn } from '../shared/cn.js';
 // UI-only constants (not shared with VoiceCoachPanel)
 const SAMPLE_INTERVAL_MS = 16; // Capture every ~16ms (60fps) for smooth waveform
 const DEFAULT_RECORDING_TIMEOUT_SECONDS = 30;

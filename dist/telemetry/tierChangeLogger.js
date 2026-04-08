@@ -1,4 +1,4 @@
-import { determineTierChangeReason, } from './tierChange';
+import { determineTierChangeReason, } from './tierChange.js';
 export { determineTierChangeReason };
 export function createTierChangeLoggerService(store, logger) {
     async function persistTierChange(params) {

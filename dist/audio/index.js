@@ -1,1 +1,1 @@
-export { RecordingOverlay } from './RecordingOverlay';
+export { RecordingOverlay } from './RecordingOverlay.js';

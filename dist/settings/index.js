@@ -1,3 +1,3 @@
-export * from './settingsTabs';
-export * from './tierBrandingCore';
-export * from './serviceAdapter';
+export * from './settingsTabs.js';
+export * from './tierBrandingCore.js';
+export * from './serviceAdapter.js';

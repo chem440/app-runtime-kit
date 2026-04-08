@@ -1,3 +1,3 @@
-export * from './SWRProvider';
-export * from './dedupingConfig';
-export * from './fetchers';
+export * from './SWRProvider.js';
+export * from './dedupingConfig.js';
+export * from './fetchers.js';
