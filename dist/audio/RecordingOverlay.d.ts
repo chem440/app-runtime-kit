@@ -14,9 +14,8 @@ interface RecordingOverlayProps {
 /**
  * Recording Overlay with Scrolling Waveform
  *
- * Shows a scrolling waveform visualization that accumulates audio level samples
- * over time, similar to iOS Voice Memos. New samples appear on the right and
- * scroll left as recording continues.
+ * Self-contained styling: this component injects scoped CSS once at runtime,
+ * so host apps do not need to import package stylesheets.
  */
 export declare function RecordingOverlay({ isRecording, isWarmingUp, audioLevel, voiceActivityThreshold, recordingTimeoutSeconds, recordingWarningSeconds, onRecordingTimeout, onPause, onSend, pauseLabel, logger }: RecordingOverlayProps): import("react/jsx-runtime").JSX.Element | null;
 export {};

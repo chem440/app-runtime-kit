@@ -1,19 +1,200 @@
 'use client';
 import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
 import { useEffect, useState, useRef } from 'react';
-import { cn } from '../shared/cn.js';
 // UI-only constants (not shared with VoiceCoachPanel)
 const SAMPLE_INTERVAL_MS = 16; // Capture every ~16ms (60fps) for smooth waveform
 const DEFAULT_RECORDING_TIMEOUT_SECONDS = 30;
 const DEFAULT_RECORDING_WARNING_SECONDS = 10;
 const DEFAULT_VOICE_ACTIVITY_THRESHOLD = 10;
 const FORCE_RECORDING_FALLBACK_MS = 1500;
+const STYLE_TAG_ID = 'ark-recording-overlay-styles';
+function ensureOverlayStyles() {
+    if (typeof document === 'undefined')
+        return;
+    if (document.getElementById(STYLE_TAG_ID))
+        return;
+    const style = document.createElement('style');
+    style.id = STYLE_TAG_ID;
+    style.textContent = `
+.ark-recording-overlay-root {
+  position: fixed;
+  bottom: 72px;
+  left: 1rem;
+  right: 1rem;
+  z-index: 50;
+  pointer-events: none;
+}
+@media (min-width: 640px) {
+  .ark-recording-overlay-root {
+    left: 50%;
+    right: auto;
+    width: calc(100% - 2rem);
+    max-width: 42rem;
+    transform: translateX(-50%);
+  }
+}
+
+.ark-recording-overlay-panel {
+  border-radius: var(--ark-recording-radius, 0.5rem);
+  box-shadow: var(--ark-recording-shadow, 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1));
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ark-recording-text, #fff);
+  background: var(--ark-recording-bg-idle, #0c4a6e);
+}
+.ark-recording-overlay-panel[data-state='active'] {
+  background: var(--ark-recording-bg-active, #0284c7);
+}
+.ark-recording-overlay-panel[data-state='warning'] {
+  background: var(--ark-recording-bg-warning, #0ea5e9);
+}
+.ark-recording-overlay-panel[data-state='critical'] {
+  background: var(--ark-recording-bg-critical, #be185d);
+}
+.ark-recording-overlay-panel[data-state='warming'] {
+  background: var(--ark-recording-bg-warming, #334155);
+}
+.dark .ark-recording-overlay-panel[data-state='idle'] {
+  background: var(--ark-recording-bg-idle-dark, #701a75);
+}
+.dark .ark-recording-overlay-panel[data-state='active'] {
+  background: var(--ark-recording-bg-active-dark, #a21caf);
+}
+.dark .ark-recording-overlay-panel[data-state='warning'] {
+  background: var(--ark-recording-bg-warning-dark, #a855f7);
+}
+.dark .ark-recording-overlay-panel[data-state='critical'] {
+  background: var(--ark-recording-bg-critical-dark, #be185d);
+}
+.dark .ark-recording-overlay-panel[data-state='warming'] {
+  background: var(--ark-recording-bg-warming-dark, #2e1065);
+}
+
+.ark-recording-overlay-timer {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-weight: 700;
+  min-width: 56px;
+  text-align: center;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  color: var(--ark-recording-text, #fff);
+}
+.ark-recording-overlay-timer[data-state='idle'] {
+  color: var(--ark-recording-timer-idle, rgba(255,255,255,0.7));
+}
+.ark-recording-overlay-timer[data-state='warning'] {
+  color: var(--ark-recording-timer-warning, #fef08a);
+  background: var(--ark-recording-timer-warning-bg, rgba(255,255,255,0.1));
+}
+.ark-recording-overlay-timer[data-state='critical'] {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: var(--ark-recording-timer-critical, #fef08a);
+  background: var(--ark-recording-timer-critical-bg, rgba(255,255,255,0.2));
+  animation: ark-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.ark-recording-overlay-wave {
+  flex: 1 1 0%;
+  height: 2rem;
+  overflow: hidden;
+}
+
+.ark-recording-overlay-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ark-recording-overlay-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.7);
+}
+.ark-recording-overlay-dot[data-state='warming'] {
+  background: rgba(255,255,255,0.5);
+  animation: ark-spin 1s linear infinite;
+}
+.ark-recording-overlay-dot[data-state='active'] {
+  background: #fff;
+  animation: ark-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.ark-recording-overlay-dot[data-state='idle'] {
+  animation: ark-bounce 1s infinite;
+}
+
+.ark-recording-overlay-label {
+  color: var(--ark-recording-text, #fff);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ark-recording-overlay-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
+.ark-recording-overlay-button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: 0;
+  cursor: pointer;
+  transition: color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1);
+}
+.ark-recording-overlay-button:disabled {
+  cursor: default;
+}
+.ark-recording-overlay-button--pause {
+  color: var(--ark-recording-button-pause-text, rgba(255,255,255,0.9));
+  background: var(--ark-recording-button-pause-bg, rgba(255,255,255,0.1));
+}
+.ark-recording-overlay-button--pause:hover {
+  color: var(--ark-recording-button-pause-text-hover, #fff);
+  background: var(--ark-recording-button-pause-bg-hover, rgba(255,255,255,0.2));
+}
+.ark-recording-overlay-button--send {
+  color: var(--ark-recording-button-send-text, #fff);
+  background: var(--ark-recording-button-send-bg, rgba(255,255,255,0.2));
+}
+.ark-recording-overlay-button--send:hover {
+  background: var(--ark-recording-button-send-bg-hover, rgba(255,255,255,0.3));
+}
+
+@keyframes ark-bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+@keyframes ark-pulse {
+  50% { opacity: 0.5; }
+}
+@keyframes ark-spin {
+  to { transform: rotate(360deg); }
+}
+`;
+    document.head.appendChild(style);
+}
 /**
  * Recording Overlay with Scrolling Waveform
  *
- * Shows a scrolling waveform visualization that accumulates audio level samples
- * over time, similar to iOS Voice Memos. New samples appear on the right and
- * scroll left as recording continues.
+ * Self-contained styling: this component injects scoped CSS once at runtime,
+ * so host apps do not need to import package stylesheets.
  */
 export function RecordingOverlay({ isRecording, isWarmingUp = false, audioLevel, voiceActivityThreshold = DEFAULT_VOICE_ACTIVITY_THRESHOLD, recordingTimeoutSeconds = DEFAULT_RECORDING_TIMEOUT_SECONDS, recordingWarningSeconds = DEFAULT_RECORDING_WARNING_SECONDS, onRecordingTimeout, onPause, onSend, pauseLabel = 'Pause', logger }) {
     const [recordingTime, setRecordingTime] = useState(0);
@@ -28,6 +209,9 @@ export function RecordingOverlay({ isRecording, isWarmingUp = false, audioLevel,
     onTimeoutRef.current = onRecordingTimeout;
     const voiceDetectedRef = useRef(voiceDetected);
     voiceDetectedRef.current = voiceDetected;
+    useEffect(() => {
+        ensureOverlayStyles();
+    }, []);
     // Detect voice activity - once voice is detected, start the countdown
     useEffect(() => {
         if (!isRecording) {
@@ -39,7 +223,7 @@ export function RecordingOverlay({ isRecording, isWarmingUp = false, audioLevel,
             logger?.('[RecordingOverlay] Voice activity detected, starting countdown');
             setVoiceDetected(true);
         }
-    }, [isRecording, audioLevel, voiceDetected, voiceActivityThreshold]);
+    }, [isRecording, audioLevel, voiceDetected, voiceActivityThreshold, logger]);
     // Fallback: if recording is active but analyzer values never cross threshold,
     // force transition so UI/timer doesn't get stuck in "Listening..." forever.
     useEffect(() => {
@@ -164,25 +348,22 @@ export function RecordingOverlay({ isRecording, isWarmingUp = false, audioLevel,
     const timeDisplay = voiceDetected ? `${remainingTime}` : String(recordingTimeoutSeconds);
     const isNearLimit = voiceDetected && remainingTime <= recordingWarningSeconds;
     const isCritical = voiceDetected && remainingTime <= 5;
-    return (_jsx("div", { className: "fixed bottom-[72px] inset-x-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[calc(100%-2rem)] sm:max-w-2xl pointer-events-none z-50", children: _jsxs("div", { className: cn('rounded-lg shadow-lg px-8 py-3 flex items-center gap-3', isWarmingUp
-                ? 'bg-slate-700 dark:bg-violet-950'
-                : isCritical
-                    ? 'bg-pink-700 dark:bg-pink-700'
-                    : isNearLimit
-                        ? 'bg-sky-500 dark:bg-purple-500'
-                        : voiceDetected
-                            ? 'bg-sky-600 dark:bg-fuchsia-700'
-                            : 'bg-sky-900 dark:bg-fuchsia-900'), children: [_jsxs("div", { className: cn('font-mono font-bold min-w-[56px] text-center rounded-md px-2 py-1', isCritical
-                        ? 'text-2xl bg-white/20 text-yellow-200 animate-pulse'
-                        : isNearLimit
-                            ? 'text-xl bg-white/10 text-yellow-200'
-                            : voiceDetected
-                                ? 'text-xl text-white'
-                                : 'text-lg text-white/70'), children: [timeDisplay, "s"] }), _jsx("div", { className: "flex-1 h-8 overflow-hidden", children: _jsx("canvas", { ref: canvasRef, style: { width: '100%', height: '100%' } }) }), _jsxs("div", { className: "flex items-center gap-2", children: [_jsx("div", { className: cn('size-2 rounded-full shrink-0', isWarmingUp
-                                ? 'bg-white/50 animate-spin'
-                                : voiceDetected
-                                    ? 'bg-white animate-pulse'
-                                    : 'bg-white/70 animate-bounce') }), _jsx("span", { className: "text-white text-sm font-medium whitespace-nowrap", children: isWarmingUp
+    let panelState = 'idle';
+    if (isWarmingUp)
+        panelState = 'warming';
+    else if (isCritical)
+        panelState = 'critical';
+    else if (isNearLimit)
+        panelState = 'warning';
+    else if (voiceDetected)
+        panelState = 'active';
+    const timerState = isCritical ? 'critical' : isNearLimit ? 'warning' : voiceDetected ? 'warning' : 'idle';
+    const dotState = isWarmingUp
+        ? 'warming'
+        : voiceDetected
+            ? 'active'
+            : 'idle';
+    return (_jsx("div", { className: "ark-recording-overlay-root", children: _jsxs("div", { className: "ark-recording-overlay-panel", "data-state": panelState, children: [_jsxs("div", { className: "ark-recording-overlay-timer", "data-state": timerState, children: [timeDisplay, "s"] }), _jsx("div", { className: "ark-recording-overlay-wave", children: _jsx("canvas", { ref: canvasRef, style: { width: '100%', height: '100%' } }) }), _jsxs("div", { className: "ark-recording-overlay-indicator", children: [_jsx("div", { className: "ark-recording-overlay-dot", "data-state": dotState }), _jsx("span", { className: "ark-recording-overlay-label", children: isWarmingUp
                                 ? 'Warming up...'
                                 : isCritical
                                     ? 'Sending soon!'
@@ -190,5 +371,5 @@ export function RecordingOverlay({ isRecording, isWarmingUp = false, audioLevel,
                                         ? 'Wrapping up...'
                                         : voiceDetected
                                             ? 'Recording'
-                                            : 'Listening...' })] }), (onPause || onSend) && (_jsxs("div", { className: "flex items-center gap-2 pointer-events-auto", children: [onPause && (_jsx("button", { onClick: onPause, className: "px-3 py-1.5 text-sm font-medium text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors", children: pauseLabel })), onSend && (_jsx("button", { onClick: onSend, className: "px-3 py-1.5 text-sm font-medium text-white bg-white/20 hover:bg-white/30 rounded-md transition-colors", children: "Send" }))] }))] }) }));
+                                            : 'Listening...' })] }), (onPause || onSend) && (_jsxs("div", { className: "ark-recording-overlay-actions", children: [onPause && (_jsx("button", { onClick: onPause, className: "ark-recording-overlay-button ark-recording-overlay-button--pause", children: pauseLabel })), onSend && (_jsx("button", { onClick: onSend, className: "ark-recording-overlay-button ark-recording-overlay-button--send", children: "Send" }))] }))] }) }));
 }
