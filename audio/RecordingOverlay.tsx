@@ -22,6 +22,7 @@ const SAMPLE_INTERVAL_MS = 16 // Capture every ~16ms (60fps) for smooth waveform
 const DEFAULT_RECORDING_TIMEOUT_SECONDS = 30
 const DEFAULT_RECORDING_WARNING_SECONDS = 10
 const DEFAULT_VOICE_ACTIVITY_THRESHOLD = 10
+const FORCE_RECORDING_FALLBACK_MS = 1500
 
 /**
  * Recording Overlay with Scrolling Waveform
@@ -69,6 +70,21 @@ export function RecordingOverlay({
             setVoiceDetected(true)
         }
     }, [isRecording, audioLevel, voiceDetected, voiceActivityThreshold])
+
+    // Fallback: if recording is active but analyzer values never cross threshold,
+    // force transition so UI/timer doesn't get stuck in "Listening..." forever.
+    useEffect(() => {
+        if (!isRecording || voiceDetected || isWarmingUp) return
+
+        const timeout = window.setTimeout(() => {
+            if (!voiceDetectedRef.current) {
+                logger?.('[RecordingOverlay] Forcing recording state after audio threshold timeout')
+                setVoiceDetected(true)
+            }
+        }, FORCE_RECORDING_FALLBACK_MS)
+
+        return () => window.clearTimeout(timeout)
+    }, [isRecording, voiceDetected, isWarmingUp, logger])
 
     // Timer effect - only counts up AFTER voice is detected
     useEffect(() => {
