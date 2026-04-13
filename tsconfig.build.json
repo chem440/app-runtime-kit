@@ -8,5 +8,5 @@
     "outDir": "./dist",
     "rootDir": "."
   },
-  "exclude": ["node_modules", "dist", "vitest.config.ts", ".github", "scripts"]
+  "exclude": ["node_modules", "dist", "vitest.config.ts", ".github", "scripts", "**/__tests__/**", "tests/**"]
 }

@@ -15,6 +15,28 @@ npm ci
 npm run ci:platform
 ```
 
+## Test Baseline
+
+This package follows a baseline where tests must validate behavior contracts (beyond file execution):
+
+1. Contract tests: adapter/service API shape and delegation behavior
+2. Safety tests: deterministic unconfigured fallbacks
+3. Policy tests: retry/backoff and other runtime policy rules
+4. Utility tests: shared helper correctness
+
+Coverage gate (Vitest):
+- Lines >= 70%
+- Statements >= 70%
+- Branches >= 65%
+- Functions >= 50%
+
+Run:
+
+```bash
+npm run test
+npm run test:coverage
+```
+
 ## First-Time Standalone Setup
 
 For standalone usage, initialize a local runtime configuration once:

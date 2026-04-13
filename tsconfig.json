@@ -31,6 +31,9 @@
     "swr/**/*.ts",
     "swr/**/*.tsx",
     "telemetry/**/*.ts",
+    "**/__tests__/**/*.ts",
+    "**/__tests__/**/*.tsx",
+    "tests/setup.ts",
     "vitest.config.ts"
   ],
   "exclude": ["node_modules", "dist"]
