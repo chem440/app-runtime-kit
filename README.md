@@ -37,6 +37,15 @@ npm run test
 npm run test:coverage
 ```
 
+Generate coverage for a specific file or suite:
+
+```bash
+npm run test:coverage:target -- telemetry/__tests__/subscriptionMetrics.test.ts
+npm run test:coverage:target -- reports/__tests__/
+```
+
+Each run writes an isolated report under `coverage/targets/<target>-<timestamp>/`.
+
 ## First-Time Standalone Setup
 
 For standalone usage, initialize a local runtime configuration once:

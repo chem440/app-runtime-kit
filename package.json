@@ -16,7 +16,8 @@
     "build": "npm run type-check && npm run lint && npm run test && npm run build:dist",
     "ci:platform": "npm run build",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov --coverage.reporter=html --coverage.reportsDirectory=coverage/vitest"
+    "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov --coverage.reporter=html --coverage.reportsDirectory=coverage/vitest",
+    "test:coverage:target": "node scripts/run-target-coverage.mjs"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
