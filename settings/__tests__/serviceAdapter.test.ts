@@ -37,4 +37,93 @@ describe('platform settings adapter contracts', () => {
             error: 'Settings service adapter is not configured'
         })
     })
+
+    it('returns safe defaults for profile, billing, and subscription actions', async () => {
+        await expect(unconfiguredSettingsServiceAdapter.getPreferences()).resolves.toBeNull()
+        await expect(unconfiguredSettingsServiceAdapter.getProfile()).resolves.toBeNull()
+        await expect(unconfiguredSettingsServiceAdapter.saveProfile({ firstName: 'A', lastName: 'B' })).resolves.toEqual({
+            success: false,
+            error: 'Settings service adapter is not configured'
+        })
+        await expect(unconfiguredSettingsServiceAdapter.openBillingPortal()).resolves.toEqual({
+            error: 'Settings service adapter is not configured'
+        })
+        await expect(unconfiguredSettingsServiceAdapter.cancelSubscription()).resolves.toEqual({
+            success: false,
+            error: 'Settings service adapter is not configured'
+        })
+        await expect(unconfiguredSettingsServiceAdapter.reactivateSubscription()).resolves.toEqual({
+            success: false,
+            error: 'Settings service adapter is not configured'
+        })
+    })
+
+    it('returns stable account-sync fallback and tier/billing defaults', async () => {
+        await expect(unconfiguredSettingsServiceAdapter.syncAccountInfo(false)).resolves.toEqual({
+            data: {
+                tier: 'unknown',
+                tierName: 'Unknown',
+                isPaid: false,
+                isPartner: false,
+                status: null,
+                billingInterval: null,
+                periodEndsAt: null,
+                cancelAt: null,
+                paymentFailedAt: null,
+                hasCustomer: false,
+                hasSubscription: false
+            },
+            synced: false
+        })
+
+        expect(unconfiguredSettingsServiceAdapter.getBillingUiPolicy({
+            tier: 'unknown',
+            tierName: 'Unknown',
+            isPaid: false,
+            isPartner: false,
+            status: null,
+            billingInterval: null,
+            periodEndsAt: null,
+            cancelAt: null,
+            paymentFailedAt: null,
+            hasCustomer: false,
+            hasSubscription: false
+        })).toEqual({
+            hideSubscriptionWarnings: false,
+            canReactivate: true,
+            showViewPlansButton: true,
+            showLegacySubscriptionWarning: false,
+            showEnterpriseMessage: false
+        })
+
+        expect(unconfiguredSettingsServiceAdapter.resolveTierBranding('enterprise', 'Enterprise')).toEqual({
+            gradient: 'from-slate-500 to-slate-600 dark:from-slate-700 dark:to-slate-800',
+            borderColor: 'border-slate-400 dark:border-slate-500',
+            tagline: 'Enterprise'
+        })
+        expect(unconfiguredSettingsServiceAdapter.resolveTierBranding()).toEqual({
+            gradient: 'from-slate-500 to-slate-600 dark:from-slate-700 dark:to-slate-800',
+            borderColor: 'border-slate-400 dark:border-slate-500',
+            tagline: 'Plan details'
+        })
+    })
+
+    it('supports legacy deactivation/removal aliases and no-op invalidation hooks', async () => {
+        await expect(unconfiguredSettingsServiceAdapter.deactivateMentor()).resolves.toEqual({
+            success: false,
+            error: 'Settings service adapter is not configured'
+        })
+        await expect(unconfiguredSettingsServiceAdapter.cancelInvite()).resolves.toEqual({
+            ok: false,
+            error: 'Settings service adapter is not configured'
+        })
+        await expect(unconfiguredSettingsServiceAdapter.removeMentor()).resolves.toEqual({
+            ok: false,
+            error: 'Settings service adapter is not configured'
+        })
+
+        expect(() => unconfiguredSettingsServiceAdapter.refreshUserStatus()).not.toThrow()
+        expect(() => unconfiguredSettingsServiceAdapter.invalidateAccountInfo()).not.toThrow()
+        expect(() => unconfiguredSettingsServiceAdapter.invalidateSubscriptionWarning()).not.toThrow()
+    })
 })

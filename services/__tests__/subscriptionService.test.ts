@@ -105,4 +105,62 @@ describe('subscriptionService', () => {
       showEnterpriseMessage: false,
     })
   })
+
+  it('preserves boundary sync metadata from configured adapter', async () => {
+    const adapter: SettingsServiceAdapter = {
+      ...unconfiguredSettingsServiceAdapter,
+      syncAccountInfo: vi.fn(async () => ({
+        data: {
+          tier: 'free',
+          tierName: 'Free',
+          isPaid: false,
+          isPartner: true,
+          status: null,
+          billingInterval: null,
+          periodEndsAt: null,
+          cancelAt: null,
+          paymentFailedAt: null,
+          hasCustomer: false,
+          hasSubscription: false,
+          weekResetsAt: '2026-04-20T00:00:00.000Z',
+        },
+        synced: false,
+        rateLimited: true,
+        retryAfterSeconds: 30,
+      })),
+    }
+
+    const service = createSubscriptionServiceFromAdapter(adapter)
+    await expect(service.syncAccountInfo(true)).resolves.toEqual({
+      data: {
+        tier: 'free',
+        tierName: 'Free',
+        isPaid: false,
+        isPartner: true,
+        status: null,
+        billingInterval: null,
+        periodEndsAt: null,
+        cancelAt: null,
+        paymentFailedAt: null,
+        hasCustomer: false,
+        hasSubscription: false,
+        weekResetsAt: '2026-04-20T00:00:00.000Z',
+      },
+      synced: false,
+      rateLimited: true,
+      retryAfterSeconds: 30,
+    })
+  })
+
+  it('propagates configured adapter failures for account sync', async () => {
+    const adapter: SettingsServiceAdapter = {
+      ...unconfiguredSettingsServiceAdapter,
+      syncAccountInfo: vi.fn(async () => {
+        throw new Error('subscription backend timeout')
+      }),
+    }
+
+    const service = createSubscriptionServiceFromAdapter(adapter)
+    await expect(service.getAccountInfo()).rejects.toThrow('subscription backend timeout')
+  })
 })

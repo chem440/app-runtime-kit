@@ -67,4 +67,88 @@ describe('settingsService', () => {
       error: 'Settings service is not configured',
     })
   })
+
+  it('preserves boundary payloads from configured adapter responses', async () => {
+    const adapter: SettingsServiceAdapter = {
+      ...unconfiguredSettingsServiceAdapter,
+      getPreferences: vi.fn(async () => ({
+        hideCompletedLessons: true,
+        showPerformanceTimer: false,
+        transparencyPreference: 1,
+        themePreference: 'dark',
+        appDefaults: {
+          quality: 'high',
+          retries: 0,
+          assistantEnabled: false,
+          legacy: null,
+        },
+      })),
+      getConnectionState: vi.fn(async () => ({
+        connection: {
+          id: 'conn_1',
+          name: null,
+          email: 'advisor@example.com',
+        },
+        pendingInvite: null,
+      })),
+      sendConnectionInvite: vi.fn(async () => ({
+        ok: true,
+        invite: {
+          id: 'invite_1',
+          inviteEmail: 'new-user@example.com',
+          mentorEmail: 'new-user@example.com',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          status: 'pending',
+        },
+      })),
+    }
+
+    const service = createSettingsServiceFromAdapter(adapter)
+
+    await expect(service.getPreferences()).resolves.toEqual({
+      hideCompletedLessons: true,
+      showPerformanceTimer: false,
+      transparencyPreference: 1,
+      themePreference: 'dark',
+      appDefaults: {
+        quality: 'high',
+        retries: 0,
+        assistantEnabled: false,
+        legacy: null,
+      },
+    })
+    await expect(service.getConnectionState()).resolves.toEqual({
+      connection: {
+        id: 'conn_1',
+        name: null,
+        email: 'advisor@example.com',
+      },
+      pendingInvite: null,
+    })
+    await expect(service.sendConnectionInvite('new-user@example.com')).resolves.toEqual({
+      ok: true,
+      invite: {
+        id: 'invite_1',
+        inviteEmail: 'new-user@example.com',
+        mentorEmail: 'new-user@example.com',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        status: 'pending',
+      },
+    })
+  })
+
+  it('surfaces configured adapter failures without masking the error', async () => {
+    const dependencyFailure = new Error('settings provider unavailable')
+    const adapter: SettingsServiceAdapter = {
+      ...unconfiguredSettingsServiceAdapter,
+      saveProfile: vi.fn(async () => {
+        throw dependencyFailure
+      }),
+    }
+
+    const service = createSettingsServiceFromAdapter(adapter)
+    await expect(service.saveProfile({ firstName: 'A', lastName: 'B' })).rejects.toThrow(
+      'settings provider unavailable'
+    )
+  })
 })
