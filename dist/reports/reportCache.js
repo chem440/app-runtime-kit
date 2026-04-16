@@ -57,7 +57,7 @@ export function createReportCacheService(options) {
     }
     async function invalidateReportCache(type) {
         try {
-            return store.deleteByQueryType(type);
+            return await store.deleteByQueryType(type);
         }
         catch (error) {
             logger.error('[Report Cache] Invalidation error:', error);
@@ -67,7 +67,7 @@ export function createReportCacheService(options) {
     async function cleanupReportCache(maxAgeMs = 24 * 60 * 60 * 1000) {
         try {
             const cutoff = new Date(Date.now() - maxAgeMs);
-            return store.cleanupOlderThan(cutoff);
+            return await store.cleanupOlderThan(cutoff);
         }
         catch (error) {
             logger.error('[Report Cache] Cleanup error:', error);

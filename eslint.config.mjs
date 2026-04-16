@@ -2,7 +2,7 @@ import tsParser from '@typescript-eslint/parser'
 
 const config = [
   {
-    ignores: ['node_modules/**', 'dist/**']
+    ignores: ['node_modules/**', 'dist/**', 'coverage/**']
   },
   {
     files: ['**/*.{ts,tsx,mts,cts}'],

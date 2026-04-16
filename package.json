@@ -12,12 +12,12 @@
     "build:dist": "rm -rf dist && tsc -p tsconfig.build.json && node scripts/fix-dist-import-extensions.mjs && npm run build:css",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --silent",
-    "build": "npm run type-check && npm run lint && npm run test && npm run build:dist",
-    "ci:platform": "npm run build",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov --coverage.reporter=html --coverage.reportsDirectory=coverage/vitest",
-    "test:coverage:target": "node scripts/run-target-coverage.mjs"
+    "test:unit": "vitest run --silent",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov --coverage.reporter=html --coverage.reportsDirectory=coverage/vitest",
+    "test:unit:coverage:target": "node scripts/run-target-coverage.mjs",
+    "build": "npm run type-check && npm run lint && npm run test:unit && npm run build:dist",
+    "ci:platform": "npm run build"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -73,6 +73,8 @@
   ],
   "dependencies": {
     "@vercel/kv": "^2.0.0",
+    "baseline-browser-mapping": "^2.10.19",
+    "caniuse-lite": "^1.0.30001788",
     "clsx": "^2.1.1",
     "swr": "^2.3.8",
     "swr-package": "npm:swr@^2.3.8",

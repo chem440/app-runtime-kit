@@ -33,15 +33,15 @@ Coverage gate (Vitest):
 Run:
 
 ```bash
-npm run test
-npm run test:coverage
+npm run test:unit
+npm run test:unit:coverage
 ```
 
 Generate coverage for a specific file or suite:
 
 ```bash
-npm run test:coverage:target -- telemetry/__tests__/subscriptionMetrics.test.ts
-npm run test:coverage:target -- reports/__tests__/
+npm run test:unit:coverage:target -- telemetry/__tests__/subscriptionMetrics.test.ts
+npm run test:unit:coverage:target -- reports/__tests__/
 ```
 
 Each run writes an isolated report under `coverage/targets/<target>-<timestamp>/`.
@@ -71,7 +71,7 @@ The required CI checks are:
 
 1. `npm run type-check`
 2. `npm run lint`
-3. `npm run test`
+3. `npm run test:unit`
 4. `npm run build`
 
 `npm run ci:platform` runs the same contract in order.
