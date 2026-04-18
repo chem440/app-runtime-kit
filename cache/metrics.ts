@@ -1,5 +1,5 @@
 export {
-  getRedisMetricsSnapshot,
-  recordRedisOp,
-  resetRedisMetrics,
+  getKVMetricsSnapshot,
+  recordKVOp,
+  resetKVMetrics,
 } from '../kv/metrics'

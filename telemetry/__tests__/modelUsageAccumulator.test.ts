@@ -7,8 +7,8 @@ describe('platform model usage accumulator', () => {
     })
 
     it('accumulates and reads model usage sorted by cost', async () => {
-        const { resetMockRedis } = await import('../../cache/mock')
-        resetMockRedis()
+        const { resetMockKV } = await import('../../cache/mock')
+        resetMockKV()
 
         const {
             accumulateModelUsage,

@@ -1,30 +1,30 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getRedisMetricsSnapshot as getFromCacheMetrics,
-  recordRedisOp as recordFromCacheMetrics,
-  resetRedisMetrics as resetFromCacheMetrics,
+  getKVMetricsSnapshot as getFromCacheMetrics,
+  recordKVOp as recordFromCacheMetrics,
+  resetKVMetrics as resetFromCacheMetrics,
 } from '../metrics'
 import * as cacheBarrel from '../index'
 import {
-  getRedisMetricsSnapshot as getFromRedisMetrics,
-  recordRedisOp as recordFromRedisMetrics,
-  resetRedisMetrics as resetFromRedisMetrics,
+  getKVMetricsSnapshot as getFromKVMetrics,
+  recordKVOp as recordFromKVMetrics,
+  resetKVMetrics as resetFromKVMetrics,
 } from '../../kv/metrics'
 
 describe('cache metrics import wiring', () => {
-  it('re-exports redis metrics functions with stable references', () => {
-    expect(recordFromCacheMetrics).toBe(recordFromRedisMetrics)
-    expect(getFromCacheMetrics).toBe(getFromRedisMetrics)
-    expect(resetFromCacheMetrics).toBe(resetFromRedisMetrics)
+  it('re-exports kv metrics functions with stable references', () => {
+    expect(recordFromCacheMetrics).toBe(recordFromKVMetrics)
+    expect(getFromCacheMetrics).toBe(getFromKVMetrics)
+    expect(resetFromCacheMetrics).toBe(resetFromKVMetrics)
   })
 
-  it('routes metric writes through cache re-export to shared redis metrics state', () => {
+  it('routes metric writes through cache re-export to shared kv metrics state', () => {
     resetFromCacheMetrics()
 
     recordFromCacheMetrics('cache:get', 12, false)
     recordFromCacheMetrics('cache:get', 30, true)
 
-    const snapshot = getFromRedisMetrics()
+    const snapshot = getFromKVMetrics()
     expect(snapshot.totalCalls).toBe(2)
     expect(snapshot.totalErrors).toBe(1)
     expect(snapshot.byOpSummary['cache:get']).toEqual(
@@ -38,8 +38,8 @@ describe('cache metrics import wiring', () => {
   })
 
   it('exposes metrics exports via cache barrel contract', () => {
-    expect(cacheBarrel.recordRedisOp).toBeTypeOf('function')
-    expect(cacheBarrel.getRedisMetricsSnapshot).toBeTypeOf('function')
-    expect(cacheBarrel.resetRedisMetrics).toBeTypeOf('function')
+    expect(cacheBarrel.recordKVOp).toBeTypeOf('function')
+    expect(cacheBarrel.getKVMetricsSnapshot).toBeTypeOf('function')
+    expect(cacheBarrel.resetKVMetrics).toBeTypeOf('function')
   })
 })

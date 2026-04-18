@@ -8,7 +8,7 @@ interface MockExpiry {
   [key: string]: number
 }
 
-class MockRedis implements KVAdapter {
+class MockKV implements KVAdapter {
   private store: MockStore = {}
   private expiry: MockExpiry = {}
   private callLog: Array<{ method: string; args: any[] }> = []
@@ -298,23 +298,23 @@ class MockRedis implements KVAdapter {
   }
 }
 
-let mockInstance: MockRedis | null = null
+let mockInstance: MockKV | null = null
 
-export function getMockRedis(): MockRedis {
+export function getMockKV(): MockKV {
   if (!mockInstance) {
-    mockInstance = new MockRedis()
+    mockInstance = new MockKV()
   }
   return mockInstance
 }
 
-export function resetMockRedis() {
+export function resetMockKV() {
   if (mockInstance) {
     mockInstance.__reset()
   }
 }
 
-export function shouldUseMockRedis(): boolean {
+export function shouldUseMockKV(): boolean {
   return process.env.MOCK_REDIS === '1'
 }
 
-export type { MockRedis }
+export type { MockKV }

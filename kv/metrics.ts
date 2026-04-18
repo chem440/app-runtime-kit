@@ -1,4 +1,4 @@
-type RedisOpStats = {
+type KVOpStats = {
     calls: number
     errors: number
     totalMs: number
@@ -6,22 +6,22 @@ type RedisOpStats = {
     samples: number[]
 }
 
-type RedisMetricsState = {
+type KVMetricsState = {
     startedAt: string
     lastResetAt: string
     totalCalls: number
     totalErrors: number
-    byOp: Record<string, RedisOpStats>
+    byOp: Record<string, KVOpStats>
 }
 
-const GLOBAL_KEY = '__LO_PLATFORM_REDIS_METRICS__'
+const GLOBAL_KEY = '__LO_PLATFORM_KV_METRICS__'
 const MAX_SAMPLES_PER_OP = 512
 
 function nowIso(): string {
     return new Date().toISOString()
 }
 
-function createInitialState(): RedisMetricsState {
+function createInitialState(): KVMetricsState {
     const ts = nowIso()
     return {
         startedAt: ts,
@@ -32,15 +32,15 @@ function createInitialState(): RedisMetricsState {
     }
 }
 
-function getState(): RedisMetricsState {
+function getState(): KVMetricsState {
     const globalObject = globalThis as typeof globalThis & {
-        [GLOBAL_KEY]?: RedisMetricsState
+        [GLOBAL_KEY]?: KVMetricsState
     }
 
     if (!globalObject[GLOBAL_KEY]) {
         globalObject[GLOBAL_KEY] = createInitialState()
     }
-    return globalObject[GLOBAL_KEY] as RedisMetricsState
+    return globalObject[GLOBAL_KEY] as KVMetricsState
 }
 
 function pushSample(samples: number[], value: number): number[] {
@@ -58,13 +58,13 @@ function percentile(values: number[], p: number): number {
     return sorted[index]
 }
 
-export function recordRedisOp(op: string, durationMs: number, isError: boolean): void {
+export function recordKVOp(op: string, durationMs: number, isError: boolean): void {
     const state = getState()
     state.totalCalls += 1
     if (isError) state.totalErrors += 1
 
     const prior = state.byOp[op]
-    const stats: RedisOpStats = {
+    const stats: KVOpStats = {
         calls: typeof prior?.calls === 'number' ? prior.calls : 0,
         errors: typeof prior?.errors === 'number' ? prior.errors : 0,
         totalMs: typeof prior?.totalMs === 'number' ? prior.totalMs : 0,
@@ -83,7 +83,7 @@ export function recordRedisOp(op: string, durationMs: number, isError: boolean):
     state.byOp[op] = stats
 }
 
-export function getRedisMetricsSnapshot(): RedisMetricsState & {
+export function getKVMetricsSnapshot(): KVMetricsState & {
     byOpSummary: Record<string, {
         calls: number
         errors: number
@@ -95,7 +95,7 @@ export function getRedisMetricsSnapshot(): RedisMetricsState & {
     }>
 } {
     const state = getState()
-    const copy = JSON.parse(JSON.stringify(state)) as RedisMetricsState
+    const copy = JSON.parse(JSON.stringify(state)) as KVMetricsState
     const byOpSummary: Record<string, {
         calls: number
         errors: number
@@ -124,11 +124,11 @@ export function getRedisMetricsSnapshot(): RedisMetricsState & {
     }
 }
 
-export function resetRedisMetrics(): ReturnType<typeof getRedisMetricsSnapshot> {
+export function resetKVMetrics(): ReturnType<typeof getKVMetricsSnapshot> {
     const state = getState()
     state.lastResetAt = nowIso()
     state.totalCalls = 0
     state.totalErrors = 0
     state.byOp = {}
-    return getRedisMetricsSnapshot()
+    return getKVMetricsSnapshot()
 }

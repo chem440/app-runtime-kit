@@ -1,6 +1,6 @@
 import type { KVAdapter } from '../cache/types'
-import { getMockRedis, resetMockRedis, shouldUseMockRedis } from './mock'
-import { recordRedisOp } from './metrics'
+import { getMockKV, resetMockKV, shouldUseMockKV } from './mock'
+import { recordKVOp } from './metrics'
 
 const TRACKED_KV_OPS = new Set([
     'get', 'set', 'del', 'keys', 'mget',
@@ -29,10 +29,10 @@ function makePipelineProxy<T extends object>(pipeline: T): T {
                     const startedAt = performance.now()
                     try {
                         const result = await Reflect.apply(original, target, args)
-                        recordRedisOp('pipeline.exec', performance.now() - startedAt, false)
+                        recordKVOp('pipeline.exec', performance.now() - startedAt, false)
                         return result
                     } catch (error) {
-                        recordRedisOp('pipeline.exec', performance.now() - startedAt, true)
+                        recordKVOp('pipeline.exec', performance.now() - startedAt, true)
                         throw error
                     }
                 }
@@ -46,10 +46,10 @@ function makePipelineProxy<T extends object>(pipeline: T): T {
                 const startedAt = performance.now()
                 try {
                     const result = Reflect.apply(original, target, args)
-                    recordRedisOp(`pipeline.${prop}`, performance.now() - startedAt, false)
+                    recordKVOp(`pipeline.${prop}`, performance.now() - startedAt, false)
                     return result === target ? proxy : result
                 } catch (error) {
-                    recordRedisOp(`pipeline.${prop}`, performance.now() - startedAt, true)
+                    recordKVOp(`pipeline.${prop}`, performance.now() - startedAt, true)
                     throw error
                 }
             }
@@ -62,7 +62,7 @@ function makePipelineProxy<T extends object>(pipeline: T): T {
 // --- EXPORTS ---
 
 // Lazy singleton. In test environments (MOCK_REDIS=1) getInstance() auto-activates
-// MockRedis without requiring initKV to be called. In production, initKV must be
+// MockKV without requiring initKV to be called. In production, initKV must be
 // called before the first kv access.
 let _instance: KVAdapter | null = null
 
@@ -77,8 +77,8 @@ export function initKV(client: KVAdapter): void {
 
 function getInstance(): KVAdapter {
     if (!_instance) {
-        if (shouldUseMockRedis()) {
-            _instance = getMockRedis()
+        if (shouldUseMockKV()) {
+            _instance = getMockKV()
             return _instance
         }
         throw new Error(
@@ -90,7 +90,7 @@ function getInstance(): KVAdapter {
 
 /**
  * Instrumented KV client.
- * - In test environments (MOCK_REDIS=1): backed by in-memory MockRedis
+ * - In test environments (MOCK_REDIS=1): backed by in-memory MockKV
  * - In all other environments: backed by whatever client was passed to initKV()
  *
  * Construction is deferred to first use so importing this module in tests
@@ -109,10 +109,10 @@ export const kv = new Proxy({} as KVAdapter, {
                 const startedAt = performance.now()
                 try {
                     const pipeline = Reflect.apply(value, instance, args)
-                    recordRedisOp('pipeline', performance.now() - startedAt, false)
+                    recordKVOp('pipeline', performance.now() - startedAt, false)
                     return makePipelineProxy(pipeline as object)
                 } catch (error) {
-                    recordRedisOp('pipeline', performance.now() - startedAt, true)
+                    recordKVOp('pipeline', performance.now() - startedAt, true)
                     throw error
                 }
             }
@@ -126,15 +126,15 @@ export const kv = new Proxy({} as KVAdapter, {
             const startedAt = performance.now()
             try {
                 const result = await Reflect.apply(value, instance, args)
-                recordRedisOp(prop, performance.now() - startedAt, false)
+                recordKVOp(prop, performance.now() - startedAt, false)
                 return result
             } catch (error) {
-                recordRedisOp(prop, performance.now() - startedAt, true)
+                recordKVOp(prop, performance.now() - startedAt, true)
                 throw error
             }
         }
     },
 })
 
-export { getMockRedis, resetMockRedis, shouldUseMockRedis }
+export { getMockKV, resetMockKV, shouldUseMockKV }
 export type { KVAdapter, KVPipeline } from '../cache/types'
