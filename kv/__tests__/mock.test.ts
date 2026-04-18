@@ -84,11 +84,11 @@ describe('kv mock (sample cache contract)', () => {
   })
 
   it('uses env flag to decide whether mock kv should be enabled', () => {
-    const original = process.env.MOCK_REDIS
-    process.env.MOCK_REDIS = '1'
+    const original = process.env.MOCK_CACHE
+    process.env.MOCK_CACHE = '1'
     expect(shouldUseMockKV()).toBe(true)
-    process.env.MOCK_REDIS = '0'
+    process.env.MOCK_CACHE = '0'
     expect(shouldUseMockKV()).toBe(false)
-    process.env.MOCK_REDIS = original
+    process.env.MOCK_CACHE = original
   })
 })

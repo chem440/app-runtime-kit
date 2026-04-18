@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('platform model usage accumulator', () => {
     beforeEach(() => {
-        process.env.MOCK_REDIS = '1'
+        process.env.MOCK_CACHE = '1'
         vi.resetModules()
     })
 

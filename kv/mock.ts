@@ -314,7 +314,7 @@ export function resetMockKV() {
 }
 
 export function shouldUseMockKV(): boolean {
-  return process.env.MOCK_REDIS === '1'
+  return process.env.MOCK_CACHE === '1'
 }
 
 export type { MockKV }
