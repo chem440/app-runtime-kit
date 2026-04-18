@@ -4,5 +4,5 @@ export {
   getMockRedis,
   resetMockRedis,
   shouldUseMockRedis,
-} from '../redis/kv'
+} from '../kv/kv'
 export type { KVAdapter, KVPipeline } from './types'

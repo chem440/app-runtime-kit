@@ -1,1 +1,1 @@
-export { getRedisMetricsSnapshot, recordRedisOp, resetRedisMetrics, } from '../redis/metrics.js';
+export { getRedisMetricsSnapshot, recordRedisOp, resetRedisMetrics, } from '../kv/metrics.js';

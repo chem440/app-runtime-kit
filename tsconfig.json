@@ -21,7 +21,7 @@
     "audio/**/*.ts",
     "audio/**/*.tsx",
     "cache/**/*.ts",
-    "redis/**/*.ts",
+    "kv/**/*.ts",
     "reports/**/*.ts",
     "services/**/*.ts",
     "settings/**/*.ts",

@@ -9,7 +9,7 @@ import {
   getRedisMetricsSnapshot as getFromRedisMetrics,
   recordRedisOp as recordFromRedisMetrics,
   resetRedisMetrics as resetFromRedisMetrics,
-} from '../../redis/metrics'
+} from '../../kv/metrics'
 
 describe('cache metrics import wiring', () => {
   it('re-exports redis metrics functions with stable references', () => {

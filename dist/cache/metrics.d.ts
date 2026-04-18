@@ -1,1 +1,1 @@
-export { getRedisMetricsSnapshot, recordRedisOp, resetRedisMetrics, } from '../redis/metrics';
+export { getRedisMetricsSnapshot, recordRedisOp, resetRedisMetrics, } from '../kv/metrics';

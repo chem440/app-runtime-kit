@@ -1,1 +1,1 @@
-export * from '../redis/mock';
+export * from '../kv/mock';
