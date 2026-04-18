@@ -67,7 +67,7 @@ function makePipelineProxy<T extends object>(pipeline: T): T {
 let _instance: KVAdapter | null = null
 
 /**
- * Register the Redis client implementation.
+ * Register the cache client implementation.
  * Call once at application startup before any kv access.
  * Accepts any object satisfying KVAdapter — not tied to a specific provider.
  */

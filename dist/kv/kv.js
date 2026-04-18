@@ -51,12 +51,12 @@ function makePipelineProxy(pipeline) {
     return proxy;
 }
 // --- EXPORTS ---
-// Lazy singleton. In test environments (MOCK_REDIS=1) getInstance() auto-activates
+// Lazy singleton. In test environments (MOCK_CACHE=1) getInstance() auto-activates
 // MockKV without requiring initKV to be called. In production, initKV must be
 // called before the first kv access.
 let _instance = null;
 /**
- * Register the Redis client implementation.
+ * Register the cache client implementation.
  * Call once at application startup before any kv access.
  * Accepts any object satisfying KVAdapter — not tied to a specific provider.
  */
@@ -75,7 +75,7 @@ function getInstance() {
 }
 /**
  * Instrumented KV client.
- * - In test environments (MOCK_REDIS=1): backed by in-memory MockKV
+ * - In test environments (MOCK_CACHE=1): backed by in-memory MockKV
  * - In all other environments: backed by whatever client was passed to initKV()
  *
  * Construction is deferred to first use so importing this module in tests

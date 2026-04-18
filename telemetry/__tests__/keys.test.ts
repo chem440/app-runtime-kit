@@ -11,10 +11,10 @@ import {
 } from '../keys'
 import {
   getMonthKey,
-  monthlyFlushLockRedisKey,
-  monthlyUsageRedisKey,
-  monthlyUsersRedisKey,
-  usageRedisKey,
+  monthlyFlushLockKVKey,
+  monthlyUsageKVKey,
+  monthlyUsersKVKey,
+  usageKVKey,
 } from '../usageKeys'
 
 describe('platform telemetry key builders', () => {
@@ -69,15 +69,15 @@ describe('platform telemetry key builders', () => {
     expect(telemetryKeys.billing.confirmationTimeout()).toBe('billing:confirmation_timeout')
   })
 
-  it('builds usage accumulator redis keys', () => {
+  it('builds usage accumulator cache keys', () => {
     expect(getMonthKey(new Date('2026-04-05T12:00:00.000Z'))).toBe('2026-04')
-    expect(usageRedisKey('u1', '2026-W14', 'voice_session_start', 'call_count')).toBe(
+    expect(usageKVKey('u1', '2026-W14', 'voice_session_start', 'call_count')).toBe(
       'ai:usage:u1:2026-W14:voice_session_start:call_count'
     )
-    expect(monthlyUsageRedisKey('2026-04', 'lesson_analysis', 'call_count')).toBe(
+    expect(monthlyUsageKVKey('2026-04', 'lesson_analysis', 'call_count')).toBe(
       'ai:monthly:2026-04:lesson_analysis:call_count'
     )
-    expect(monthlyUsersRedisKey('2026-04', 'lesson_analysis')).toBe('ai:monthly:2026-04:lesson_analysis:users')
-    expect(monthlyFlushLockRedisKey('2026-04')).toBe('ai:monthly:flush_lock:2026-04')
+    expect(monthlyUsersKVKey('2026-04', 'lesson_analysis')).toBe('ai:monthly:2026-04:lesson_analysis:users')
+    expect(monthlyFlushLockKVKey('2026-04')).toBe('ai:monthly:flush_lock:2026-04')
   })
 })

@@ -284,5 +284,5 @@ export function resetMockKV() {
     }
 }
 export function shouldUseMockKV() {
-    return process.env.MOCK_REDIS === '1';
+    return process.env.MOCK_CACHE === '1';
 }
