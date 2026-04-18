@@ -1,6 +1,5 @@
 export * from './audio.js';
 export * from './cache.js';
-export * from './redis.js';
 export * from './reports.js';
 export * from './services.js';
 export * from './settings.js';
