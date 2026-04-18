@@ -1,5 +1,5 @@
 import type { KVAdapter } from '../cache/types';
-import { getMockRedis, resetMockRedis, shouldUseMockRedis } from './mock';
+import { getMockKV, resetMockKV, shouldUseMockKV } from './mock';
 /**
  * Register the Redis client implementation.
  * Call once at application startup before any kv access.
@@ -8,12 +8,12 @@ import { getMockRedis, resetMockRedis, shouldUseMockRedis } from './mock';
 export declare function initKV(client: KVAdapter): void;
 /**
  * Instrumented KV client.
- * - In test environments (MOCK_REDIS=1): backed by in-memory MockRedis
+ * - In test environments (MOCK_REDIS=1): backed by in-memory MockKV
  * - In all other environments: backed by whatever client was passed to initKV()
  *
  * Construction is deferred to first use so importing this module in tests
  * without initKV being called does not throw.
  */
 export declare const kv: KVAdapter;
-export { getMockRedis, resetMockRedis, shouldUseMockRedis };
+export { getMockKV, resetMockKV, shouldUseMockKV };
 export type { KVAdapter, KVPipeline } from '../cache/types';

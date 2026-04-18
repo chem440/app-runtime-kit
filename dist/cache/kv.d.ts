@@ -1,2 +1,2 @@
-export { kv, initKV, getMockRedis, resetMockRedis, shouldUseMockRedis, } from '../kv/kv';
+export { kv, initKV, getMockKV, resetMockKV, shouldUseMockKV, } from '../kv/kv';
 export type { KVAdapter, KVPipeline } from './types';

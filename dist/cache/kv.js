@@ -1,1 +1,1 @@
-export { kv, initKV, getMockRedis, resetMockRedis, shouldUseMockRedis, } from '../kv/kv.js';
+export { kv, initKV, getMockKV, resetMockKV, shouldUseMockKV, } from '../kv/kv.js';

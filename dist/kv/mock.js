@@ -1,4 +1,4 @@
-class MockRedis {
+class MockKV {
     store = {};
     expiry = {};
     callLog = [];
@@ -272,17 +272,17 @@ class MockRedis {
     }
 }
 let mockInstance = null;
-export function getMockRedis() {
+export function getMockKV() {
     if (!mockInstance) {
-        mockInstance = new MockRedis();
+        mockInstance = new MockKV();
     }
     return mockInstance;
 }
-export function resetMockRedis() {
+export function resetMockKV() {
     if (mockInstance) {
         mockInstance.__reset();
     }
 }
-export function shouldUseMockRedis() {
+export function shouldUseMockKV() {
     return process.env.MOCK_REDIS === '1';
 }

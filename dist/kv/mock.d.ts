@@ -1,5 +1,5 @@
 import type { KVAdapter, KVPipeline } from '../cache/types';
-declare class MockRedis implements KVAdapter {
+declare class MockKV implements KVAdapter {
     private store;
     private expiry;
     private callLog;
@@ -44,7 +44,7 @@ declare class MockRedis implements KVAdapter {
     };
     __setKey(key: string, value: any): void;
 }
-export declare function getMockRedis(): MockRedis;
-export declare function resetMockRedis(): void;
-export declare function shouldUseMockRedis(): boolean;
-export type { MockRedis };
+export declare function getMockKV(): MockKV;
+export declare function resetMockKV(): void;
+export declare function shouldUseMockKV(): boolean;
+export type { MockKV };

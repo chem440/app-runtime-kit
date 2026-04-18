@@ -1,4 +1,4 @@
-const GLOBAL_KEY = '__LO_PLATFORM_REDIS_METRICS__';
+const GLOBAL_KEY = '__LO_PLATFORM_KV_METRICS__';
 const MAX_SAMPLES_PER_OP = 512;
 function nowIso() {
     return new Date().toISOString();
@@ -34,7 +34,7 @@ function percentile(values, p) {
     const index = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
     return sorted[index];
 }
-export function recordRedisOp(op, durationMs, isError) {
+export function recordKVOp(op, durationMs, isError) {
     const state = getState();
     state.totalCalls += 1;
     if (isError)
@@ -57,7 +57,7 @@ export function recordRedisOp(op, durationMs, isError) {
     stats.samples = pushSample(stats.samples, durationMs);
     state.byOp[op] = stats;
 }
-export function getRedisMetricsSnapshot() {
+export function getKVMetricsSnapshot() {
     const state = getState();
     const copy = JSON.parse(JSON.stringify(state));
     const byOpSummary = {};
@@ -77,11 +77,11 @@ export function getRedisMetricsSnapshot() {
         byOpSummary,
     };
 }
-export function resetRedisMetrics() {
+export function resetKVMetrics() {
     const state = getState();
     state.lastResetAt = nowIso();
     state.totalCalls = 0;
     state.totalErrors = 0;
     state.byOp = {};
-    return getRedisMetricsSnapshot();
+    return getKVMetricsSnapshot();
 }

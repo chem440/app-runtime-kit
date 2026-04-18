@@ -1,19 +1,19 @@
-type RedisOpStats = {
+type KVOpStats = {
     calls: number;
     errors: number;
     totalMs: number;
     maxMs: number;
     samples: number[];
 };
-type RedisMetricsState = {
+type KVMetricsState = {
     startedAt: string;
     lastResetAt: string;
     totalCalls: number;
     totalErrors: number;
-    byOp: Record<string, RedisOpStats>;
+    byOp: Record<string, KVOpStats>;
 };
-export declare function recordRedisOp(op: string, durationMs: number, isError: boolean): void;
-export declare function getRedisMetricsSnapshot(): RedisMetricsState & {
+export declare function recordKVOp(op: string, durationMs: number, isError: boolean): void;
+export declare function getKVMetricsSnapshot(): KVMetricsState & {
     byOpSummary: Record<string, {
         calls: number;
         errors: number;
@@ -24,5 +24,5 @@ export declare function getRedisMetricsSnapshot(): RedisMetricsState & {
         sampleCount: number;
     }>;
 };
-export declare function resetRedisMetrics(): ReturnType<typeof getRedisMetricsSnapshot>;
+export declare function resetKVMetrics(): ReturnType<typeof getKVMetricsSnapshot>;
 export {};
