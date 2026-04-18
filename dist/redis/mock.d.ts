@@ -1,4 +1,5 @@
-declare class MockRedis {
+import type { KVAdapter, KVPipeline } from '../cache/types';
+declare class MockRedis implements KVAdapter {
     private store;
     private expiry;
     private callLog;
@@ -32,33 +33,7 @@ declare class MockRedis {
     incr(key: string): Promise<number>;
     incrby(key: string, increment: number): Promise<number>;
     keys(pattern: string): Promise<string[]>;
-    pipeline(): {
-        get: (key: string) => /*elided*/ any;
-        set: (key: string, value: any, options?: {
-            ex?: number;
-            nx?: boolean;
-        }) => /*elided*/ any;
-        setnx: (key: string, value: any) => /*elided*/ any;
-        expire: (key: string, seconds: number) => /*elided*/ any;
-        setex: (key: string, seconds: number, value: any) => /*elided*/ any;
-        del: (key: string) => /*elided*/ any;
-        hgetall: (key: string) => /*elided*/ any;
-        hmset: (key: string, values: Record<string, any>) => /*elided*/ any;
-        zadd: (key: string, item: {
-            score: number;
-            member: string;
-        }) => /*elided*/ any;
-        zrem: (key: string, member: string) => /*elided*/ any;
-        zrange: (key: string, start: number, stop: number, options?: {
-            rev?: boolean;
-        }) => /*elided*/ any;
-        zcard: (key: string) => /*elided*/ any;
-        incr: (key: string) => /*elided*/ any;
-        incrby: (key: string, increment: number) => /*elided*/ any;
-        sadd: (key: string, ...members: string[]) => /*elided*/ any;
-        scard: (key: string) => /*elided*/ any;
-        exec: () => Promise<any[]>;
-    };
+    pipeline(): KVPipeline;
     __reset(): void;
     __getCallLog(): {
         method: string;

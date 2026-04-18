@@ -1,17 +1,6 @@
-import { Redis } from '@upstash/redis'
+import type { KVAdapter } from '../cache/types'
 import { getMockRedis, resetMockRedis, shouldUseMockRedis } from './mock'
 import { recordRedisOp } from './metrics'
-
-// --- ADAPTER CONSTRUCTION ---
-
-function createUpstashRedis(): Redis {
-    const url = process.env.KV_REST_API_URL
-    const token = process.env.KV_REST_API_TOKEN
-    if (!url || !token) {
-        throw new Error('[cache] KV_REST_API_URL and KV_REST_API_TOKEN must be set')
-    }
-    return new Redis({ url, token })
-}
 
 const TRACKED_KV_OPS = new Set([
     'get', 'set', 'del', 'keys', 'mget',
@@ -72,26 +61,42 @@ function makePipelineProxy<T extends object>(pipeline: T): T {
 
 // --- EXPORTS ---
 
-// Lazy singleton — deferred so module import doesn't throw in test environments
-// where KV_REST_API_URL/TOKEN are not set. Real client is constructed on first use.
-let _instance: ReturnType<typeof getMockRedis> | Redis | null = null
+// Lazy singleton. In test environments (MOCK_REDIS=1) getInstance() auto-activates
+// MockRedis without requiring initKV to be called. In production, initKV must be
+// called before the first kv access.
+let _instance: KVAdapter | null = null
 
-function getInstance(): ReturnType<typeof getMockRedis> | Redis {
+/**
+ * Register the Redis client implementation.
+ * Call once at application startup before any kv access.
+ * Accepts any object satisfying KVAdapter — not tied to a specific provider.
+ */
+export function initKV(client: KVAdapter): void {
+    _instance = client
+}
+
+function getInstance(): KVAdapter {
     if (!_instance) {
-        _instance = shouldUseMockRedis() ? getMockRedis() : createUpstashRedis()
+        if (shouldUseMockRedis()) {
+            _instance = getMockRedis()
+            return _instance
+        }
+        throw new Error(
+            '[cache] KV client not initialized. Call initKV(client) before accessing kv.'
+        )
     }
     return _instance
 }
 
 /**
- * Instrumented Redis client.
+ * Instrumented KV client.
  * - In test environments (MOCK_REDIS=1): backed by in-memory MockRedis
- * - In all other environments: backed by Upstash Redis via KV_REST_API_URL/TOKEN
+ * - In all other environments: backed by whatever client was passed to initKV()
  *
  * Construction is deferred to first use so importing this module in tests
- * without KV credentials set does not throw.
+ * without initKV being called does not throw.
  */
-export const kv = new Proxy({} as Redis, {
+export const kv = new Proxy({} as KVAdapter, {
     get(_target, prop, receiver) {
         const instance = getInstance()
         const value = Reflect.get(instance, prop, instance)
@@ -132,3 +137,4 @@ export const kv = new Proxy({} as Redis, {
 })
 
 export { getMockRedis, resetMockRedis, shouldUseMockRedis }
+export type { KVAdapter, KVPipeline } from '../cache/types'

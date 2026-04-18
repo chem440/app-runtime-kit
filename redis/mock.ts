@@ -1,3 +1,5 @@
+import type { KVAdapter, KVPipeline } from '../cache/types'
+
 interface MockStore {
   [key: string]: any
 }
@@ -6,7 +8,7 @@ interface MockExpiry {
   [key: string]: number
 }
 
-class MockRedis {
+class MockRedis implements KVAdapter {
   private store: MockStore = {}
   private expiry: MockExpiry = {}
   private callLog: Array<{ method: string; args: any[] }> = []
@@ -205,7 +207,7 @@ class MockRedis {
     return Object.keys(this.store).filter(key => regex.test(key) && !this.isExpired(key))
   }
 
-  pipeline() {
+  pipeline(): KVPipeline {
     const commands: Array<() => Promise<any>> = []
     const pipelineProxy = {
       get: (key: string) => {
