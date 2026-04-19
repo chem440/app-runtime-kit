@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 
 const distRoot = join(process.cwd(), 'dist')
 
@@ -26,6 +26,24 @@ function hasKnownExtension(path) {
   return path.endsWith('.js') || path.endsWith('.mjs') || path.endsWith('.cjs') || path.endsWith('.json')
 }
 
+function resolveUpdatedSpecifier(filePath, specifier) {
+  if (hasKnownExtension(specifier)) return specifier
+
+  const baseDir = dirname(filePath)
+  const resolvedTarget = resolve(baseDir, specifier)
+  const asFile = `${resolvedTarget}.js`
+  if (existsSync(asFile)) {
+    return `${specifier}.js`
+  }
+
+  const asIndex = join(resolvedTarget, 'index.js')
+  if (existsSync(asIndex)) {
+    return `${specifier}/index.js`
+  }
+
+  return `${specifier}.js`
+}
+
 const importSpecifierRegex = /(from\s+['"])(\.{1,2}\/[^'"]+)(['"])/g
 const dynamicImportRegex = /(import\(\s*['"])(\.{1,2}\/[^'"]+)(['"]\s*\))/g
 
@@ -37,15 +55,17 @@ for (const filePath of walkJsFiles(distRoot)) {
   let updated = original
 
   updated = updated.replace(importSpecifierRegex, (match, prefix, specifier, suffix) => {
-    if (hasKnownExtension(specifier)) return match
+    const nextSpecifier = resolveUpdatedSpecifier(filePath, specifier)
+    if (nextSpecifier === specifier) return match
     replacements += 1
-    return `${prefix}${specifier}.js${suffix}`
+    return `${prefix}${nextSpecifier}${suffix}`
   })
 
   updated = updated.replace(dynamicImportRegex, (match, prefix, specifier, suffix) => {
-    if (hasKnownExtension(specifier)) return match
+    const nextSpecifier = resolveUpdatedSpecifier(filePath, specifier)
+    if (nextSpecifier === specifier) return match
     replacements += 1
-    return `${prefix}${specifier}.js${suffix}`
+    return `${prefix}${nextSpecifier}${suffix}`
   })
 
   if (updated !== original) {
