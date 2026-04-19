@@ -7,7 +7,7 @@ describe('platform model usage accumulator', () => {
     })
 
     it('accumulates and reads model usage sorted by cost', async () => {
-        const { resetMockKV } = await import('../../kv/mock')
+        const { resetMockKV } = await import('../../kv')
         resetMockKV()
 
         const {

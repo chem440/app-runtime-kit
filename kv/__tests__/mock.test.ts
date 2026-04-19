@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getMockKV, resetMockKV, shouldUseMockKV } from '../mock'
+import { getMockKV, resetMockKV, shouldUseMockKV } from '..'
 
 // Sample cache contract tests:
 // These cases document expected cache semantics (TTL, NX writes, key patterns,
