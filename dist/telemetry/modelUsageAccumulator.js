@@ -1,4 +1,4 @@
-import { kv } from '../kv/kv.js';
+import { kv } from '../kv.js';
 const MODEL_TTL_SECONDS = 7 * 24 * 60 * 60;
 function modelKey(model, metric) {
     return `ai:model:${model}:${metric}`;
