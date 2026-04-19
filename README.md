@@ -1,8 +1,8 @@
 # @app-runtime-kit/core
 
-A framework layer for Next.js apps that enforces contracts around KV abstraction, SWR-driven page rendering, settings adapters, and telemetry key builders.
+A framework layer for Next.js apps that enforces contracts around KV abstraction, SWR-driven page rendering, settings adapters, and telemetry services.
 
-**This is not a general-purpose utility library.** It encodes specific patterns for a specific app architecture: server-side KV caching, SWR as a page-rendering primitive, settings UIs backed by a service adapter, and structured telemetry key namespacing.
+**This is not a general-purpose utility library.** It encodes architecture patterns for app platforms: server-side KV caching, SWR as a page-rendering primitive, settings UIs backed by a service adapter, and telemetry helpers/services.
 
 ---
 
@@ -36,9 +36,25 @@ const myKvClient: KVAdapter = {
 
 ```typescript
 import { initKV } from '@app-runtime-kit/core/kv'
-import { Redis } from '@upstash/redis'
+import type { KVAdapter } from '@app-runtime-kit/core/kv'
 
-initKV(new Redis({ url: process.env.KV_URL!, token: process.env.KV_TOKEN! }))
+const adapter: KVAdapter = {
+    async get(key) { /* ... */ },
+    async set(key, value, options) { /* ... */ },
+    async del(key) { /* ... */ },
+    async mget(...keys) { /* ... */ },
+    async smembers(key) { /* ... */ },
+    async scard(key) { /* ... */ },
+    async sadd(key, ...members) { /* ... */ },
+    async incr(key) { /* ... */ },
+    async incrby(key, increment) { /* ... */ },
+    async expire(key, seconds) { /* ... */ },
+    async setnx(key, value) { /* ... */ },
+    async keys(pattern) { /* ... */ },
+    pipeline() { /* returns KVPipeline */ },
+}
+
+initKV(adapter)
 ```
 
 Call `initKV` once, before any route handler or server component accesses `kv`.
@@ -86,13 +102,15 @@ return (
 ### Deduping
 
 ```typescript
-import { dedupingConfig, createDedupedFetcher } from '@app-runtime-kit/core/swr'
+import { createDedupedFetcher, getDedupingInterval } from '@app-runtime-kit/core/swr'
 
 // Use a pre-configured interval for your data category:
-const { refreshInterval } = dedupingConfig.PROFILE  // 60s, good for account/subscription data
+const refreshInterval = getDedupingInterval('PROFILE') // 60s, good for account/subscription data
 
 // Or create a fetcher with built-in deduplication:
-const fetchMyData = createDedupedFetcher('/api/my-data', dedupingConfig.ANALYTICS)
+const fetchMyData = createDedupedFetcher<{ items: string[] }>({ items: [] })
+// extractData=false if your endpoint does not return `{ data: ... }`
+const fetchRaw = createDedupedFetcher<{ status: string }>({ status: 'unknown' }, false)
 ```
 
 Categories: `REALTIME` (5s), `ANALYTICS` (30s), `PROFILE` (60s), `STATIC` (300s).
@@ -167,9 +185,18 @@ resolveTierBranding(tierId, tierName) {
 
 ---
 
-## Telemetry Key Builders
+## Telemetry
 
-Generic namespaced key builders for KV-backed telemetry. Apps define their own metric registries on top.
+The telemetry module currently provides:
+
+- key helpers for usage/capability/page/API metrics
+- tier-change classification (`determineTierChangeReason`)
+- tier-change logging service (`createTierChangeLoggerService`)
+- subscription metrics logging + summary service (`createSubscriptionMetricsService`)
+- model usage accumulation/rollups (`accumulateModelUsage`, `accumulateModelSTT`, `accumulateModelTTS`, `getModelUsage`)
+- timezone-aware week helpers (`getWeekStartInZone`, `getWeekKey`)
+
+Apps can use only the pieces they need.
 
 ```typescript
 import {
@@ -237,6 +264,7 @@ getWeekKey()                                  // defaults to America/Los_Angeles
 
 - Not a general-purpose utility library (no string utils, no date formatting, no auth)
 - Not a UI component library (the settings modal UI is in the consuming app)
+- Not an audio UI package (`audio/RecordingOverlay` moved to the consuming app)
 - Not a database layer (no Prisma, no SQL — apps bring their own persistence)
 - Not a reporting framework (visualization, charting, and query code belongs in the app)
 - Not opinionated about billing providers, auth providers, or infrastructure
