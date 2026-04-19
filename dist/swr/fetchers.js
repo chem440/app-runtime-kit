@@ -31,7 +31,7 @@ export function createDedupedFetcher(defaultValue, extractData = true) {
                 }
                 const json = await response.json();
                 if (extractData) {
-                    return json.data ?? json ?? defaultValue;
+                    return json.data ?? defaultValue;
                 }
                 return json ?? defaultValue;
             }

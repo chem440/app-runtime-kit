@@ -28,8 +28,6 @@ function pushSample(samples, value) {
     return samples;
 }
 function percentile(values, p) {
-    if (values.length === 0)
-        return 0;
     const sorted = [...values].sort((a, b) => a - b);
     const index = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
     return sorted[index];
@@ -65,7 +63,7 @@ export function getKVMetricsSnapshot() {
         byOpSummary[op] = {
             calls: stats.calls,
             errors: stats.errors,
-            avgMs: stats.calls > 0 ? stats.totalMs / stats.calls : 0,
+            avgMs: stats.totalMs / stats.calls,
             maxMs: stats.maxMs,
             p50Ms: percentile(stats.samples, 50),
             p95Ms: percentile(stats.samples, 95),

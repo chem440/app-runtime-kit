@@ -65,10 +65,10 @@ export async function getModelUsage() {
             continue;
         results.push({
             model,
-            calls: calls ?? 0,
+            calls: calls,
             inputTokens: inputTokens ?? 0,
             outputTokens: outputTokens ?? 0,
-            cost: (costCents ?? 0) / 100,
+            cost: costCents / 100,
         });
     }
     return results.sort((a, b) => b.cost - a.cost);
