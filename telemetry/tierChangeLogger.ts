@@ -10,11 +10,11 @@ export interface TierChangeParams {
     fromTier: string | null
     toTier: string
     reason: TierChangeReason
-    stripeEventId?: string
+    billingEventId?: string
 }
 
 interface TierChangeStore {
-    findByStripeEventId(stripeEventId: string): Promise<boolean>
+    findByBillingEventId(billingEventId: string): Promise<boolean>
     create(params: TierChangeParams): Promise<void>
 }
 
@@ -28,12 +28,12 @@ export function createTierChangeLoggerService(
     logger: TierChangeLogger
 ) {
     async function persistTierChange(params: TierChangeParams): Promise<void> {
-        const { userId, fromTier, toTier, reason, stripeEventId } = params
+        const { userId, fromTier, toTier, reason, billingEventId } = params
 
-        if (stripeEventId) {
-            const exists = await store.findByStripeEventId(stripeEventId)
+        if (billingEventId) {
+            const exists = await store.findByBillingEventId(billingEventId)
             if (exists) {
-                logger.debug(`[TierChangeLogger] Duplicate event ${stripeEventId}, skipping`)
+                logger.debug(`[TierChangeLogger] Duplicate event ${billingEventId}, skipping`)
                 return
             }
         }

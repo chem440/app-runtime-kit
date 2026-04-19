@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { createTierChangeLoggerService } from '../tierChangeLogger'
 
 describe('platform tier change logger service', () => {
-    it('skips duplicate stripe events', async () => {
+    it('skips duplicate billing events', async () => {
         const store = {
-            findByStripeEventId: vi.fn(async () => true),
+            findByBillingEventId: vi.fn(async () => true),
             create: vi.fn(async () => {}),
         }
         const logger = { debug: vi.fn(), error: vi.fn() }
@@ -15,16 +15,16 @@ describe('platform tier change logger service', () => {
             fromTier: 'FREE',
             toTier: 'TIER_1',
             reason: 'upgrade',
-            stripeEventId: 'evt_123',
+            billingEventId: 'evt_123',
         })
 
-        expect(store.findByStripeEventId).toHaveBeenCalledWith('evt_123')
+        expect(store.findByBillingEventId).toHaveBeenCalledWith('evt_123')
         expect(store.create).not.toHaveBeenCalled()
     })
 
     it('persists non-duplicate events', async () => {
         const store = {
-            findByStripeEventId: vi.fn(async () => false),
+            findByBillingEventId: vi.fn(async () => false),
             create: vi.fn(async () => {}),
         }
         const logger = { debug: vi.fn(), error: vi.fn() }
@@ -35,7 +35,7 @@ describe('platform tier change logger service', () => {
             fromTier: 'TIER_1',
             toTier: 'FREE',
             reason: 'churn',
-            stripeEventId: 'evt_456',
+            billingEventId: 'evt_456',
         })
 
         expect(store.create).toHaveBeenCalledWith({
@@ -43,7 +43,7 @@ describe('platform tier change logger service', () => {
             fromTier: 'TIER_1',
             toTier: 'FREE',
             reason: 'churn',
-            stripeEventId: 'evt_456',
+            billingEventId: 'evt_456',
         })
     })
 })
