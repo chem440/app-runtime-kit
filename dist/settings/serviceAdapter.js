@@ -13,73 +13,23 @@ const EMPTY_ACCOUNT_INFO = {
     hasCustomer: false,
     hasSubscription: false
 };
+/** No-op adapter used as a safe default before the real adapter is wired up. */
 export const unconfiguredSettingsServiceAdapter = {
-    async getPreferences() {
-        return null;
-    },
-    async getConnectionState() {
-        return { connection: null, pendingInvite: null };
-    },
-    async enableAdvisorMode() {
-        return { success: false, error: UNCONFIGURED_ERROR };
-    },
-    async disableAdvisorMode() {
-        return { success: false, error: UNCONFIGURED_ERROR };
-    },
-    async sendConnectionInvite() {
-        return { ok: false, error: UNCONFIGURED_ERROR };
-    },
-    async cancelConnectionInvite() {
-        return { ok: false, error: UNCONFIGURED_ERROR };
-    },
-    async removeConnection() {
-        return { ok: false, error: UNCONFIGURED_ERROR };
-    },
-    async clearUsagePeriod() {
-        return { success: false, error: UNCONFIGURED_ERROR };
-    },
-    async getMenteeMentorState() {
-        return { mentor: null, pendingInvite: null };
-    },
-    async getProfile() {
-        return null;
-    },
-    async saveProfile() {
-        return { success: false, error: UNCONFIGURED_ERROR };
-    },
-    async becomeMentor() {
-        return unconfiguredSettingsServiceAdapter.enableAdvisorMode();
-    },
-    async deactivateMentor() {
-        return unconfiguredSettingsServiceAdapter.disableAdvisorMode();
-    },
-    async sendInvite() {
-        return unconfiguredSettingsServiceAdapter.sendConnectionInvite('');
-    },
-    async cancelInvite() {
-        return unconfiguredSettingsServiceAdapter.cancelConnectionInvite();
-    },
-    async removeMentor() {
-        return unconfiguredSettingsServiceAdapter.removeConnection();
-    },
-    async openBillingPortal() {
-        return { error: UNCONFIGURED_ERROR };
-    },
-    async cancelSubscription() {
-        return { success: false, error: UNCONFIGURED_ERROR };
-    },
-    async reactivateSubscription() {
-        return { success: false, error: UNCONFIGURED_ERROR };
-    },
-    async clearWeeklyCap() {
-        return unconfiguredSettingsServiceAdapter.clearUsagePeriod();
-    },
-    async syncAccountInfo() {
-        return { data: EMPTY_ACCOUNT_INFO, synced: false };
-    },
-    resolveTierBranding(tierId, tierName) {
-        return resolveSettingsTierBranding({ tierId, tierName });
-    },
+    async getPreferences() { return null; },
+    async getConnectionState() { return { connection: null, pendingInvite: null }; },
+    async enableAdvisorMode() { return { success: false, error: UNCONFIGURED_ERROR }; },
+    async disableAdvisorMode() { return { success: false, error: UNCONFIGURED_ERROR }; },
+    async sendConnectionInvite() { return { ok: false, error: UNCONFIGURED_ERROR }; },
+    async cancelConnectionInvite() { return { ok: false, error: UNCONFIGURED_ERROR }; },
+    async removeConnection() { return { ok: false, error: UNCONFIGURED_ERROR }; },
+    async clearUsagePeriod() { return { success: false, error: UNCONFIGURED_ERROR }; },
+    async getProfile() { return null; },
+    async saveProfile() { return { success: false, error: UNCONFIGURED_ERROR }; },
+    async openBillingPortal() { return { error: UNCONFIGURED_ERROR }; },
+    async cancelSubscription() { return { success: false, error: UNCONFIGURED_ERROR }; },
+    async reactivateSubscription() { return { success: false, error: UNCONFIGURED_ERROR }; },
+    async syncAccountInfo() { return { data: EMPTY_ACCOUNT_INFO, synced: false }; },
+    resolveTierBranding(tierId, tierName) { return resolveSettingsTierBranding({ tierId, tierName }); },
     getBillingUiPolicy() {
         return {
             hideSubscriptionWarnings: false,

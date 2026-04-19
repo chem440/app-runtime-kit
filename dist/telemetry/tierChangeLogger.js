@@ -2,11 +2,11 @@ import { determineTierChangeReason, } from './tierChange.js';
 export { determineTierChangeReason };
 export function createTierChangeLoggerService(store, logger) {
     async function persistTierChange(params) {
-        const { userId, fromTier, toTier, reason, stripeEventId } = params;
-        if (stripeEventId) {
-            const exists = await store.findByStripeEventId(stripeEventId);
+        const { userId, fromTier, toTier, reason, billingEventId } = params;
+        if (billingEventId) {
+            const exists = await store.findByBillingEventId(billingEventId);
             if (exists) {
-                logger.debug(`[TierChangeLogger] Duplicate event ${stripeEventId}, skipping`);
+                logger.debug(`[TierChangeLogger] Duplicate event ${billingEventId}, skipping`);
                 return;
             }
         }

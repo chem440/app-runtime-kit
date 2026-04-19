@@ -83,6 +83,16 @@ describe('subscriptionService', () => {
       error: 'Subscription service is not configured',
     })
 
+    await expect(unconfiguredSubscriptionService.cancelSubscription()).resolves.toEqual({
+      success: false,
+      error: 'Subscription service is not configured',
+    })
+
+    await expect(unconfiguredSubscriptionService.reactivateSubscription()).resolves.toEqual({
+      success: false,
+      error: 'Subscription service is not configured',
+    })
+
     expect(
       unconfiguredSubscriptionService.getBillingUiPolicy({
         tier: 'unknown',

@@ -7,6 +7,25 @@ async function flushPromises() {
 }
 
 describe('platform subscription metrics service', () => {
+  it('returns zero for all missing event types when no events exist', async () => {
+    const createEvent = vi.fn(async () => {})
+    // Empty result set — all four counts default to 0 via ?? 0
+    const getEventCounts = vi.fn(async () => [])
+    const logger = { debug: vi.fn(), error: vi.fn() }
+    const service = createSubscriptionMetricsService({ createEvent, getEventCounts }, logger)
+    const start = new Date('2026-03-01T00:00:00.000Z')
+    const end = new Date('2026-03-31T23:59:59.999Z')
+    const summary = await service.getSubscriptionMetrics(start, end)
+
+    expect(summary).toEqual({
+      cancels: 0,
+      reactivates: 0,
+      auditWriteFailures: 0,
+      reconciliationOverwrites: 0,
+      period: { start, end },
+    })
+  })
+
   it('summarizes grouped event counts and ignores unknown event types', async () => {
     const createEvent = vi.fn(async () => {})
     const getEventCounts = vi.fn(async () => [

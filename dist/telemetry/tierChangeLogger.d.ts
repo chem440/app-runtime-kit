@@ -6,10 +6,10 @@ export interface TierChangeParams {
     fromTier: string | null;
     toTier: string;
     reason: TierChangeReason;
-    stripeEventId?: string;
+    billingEventId?: string;
 }
 interface TierChangeStore {
-    findByStripeEventId(stripeEventId: string): Promise<boolean>;
+    findByBillingEventId(billingEventId: string): Promise<boolean>;
     create(params: TierChangeParams): Promise<void>;
 }
 interface TierChangeLogger {

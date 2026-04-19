@@ -51,6 +51,8 @@ describe('settingsService', () => {
   })
 
   it('returns deterministic safe fallbacks when unconfigured', async () => {
+    const err = 'Settings service is not configured'
+
     await expect(unconfiguredSettingsService.getPreferences()).resolves.toBeNull()
     await expect(unconfiguredSettingsService.getConnectionState()).resolves.toEqual({
       connection: null,
@@ -61,11 +63,16 @@ describe('settingsService', () => {
         firstName: 'Name',
         lastName: 'Teacher',
       })
-    ).resolves.toEqual({ success: false, error: 'Settings service is not configured' })
+    ).resolves.toEqual({ success: false, error: err })
+    await expect(unconfiguredSettingsService.enableAdvisorMode()).resolves.toEqual({ success: false, error: err })
+    await expect(unconfiguredSettingsService.disableAdvisorMode()).resolves.toEqual({ success: false, error: err })
     await expect(unconfiguredSettingsService.sendConnectionInvite('x@y.com')).resolves.toEqual({
       ok: false,
-      error: 'Settings service is not configured',
+      error: err,
     })
+    await expect(unconfiguredSettingsService.cancelConnectionInvite()).resolves.toEqual({ ok: false, error: err })
+    await expect(unconfiguredSettingsService.removeConnection()).resolves.toEqual({ ok: false, error: err })
+    await expect(unconfiguredSettingsService.clearUsagePeriod()).resolves.toEqual({ success: false, error: err })
   })
 
   it('preserves boundary payloads from configured adapter responses', async () => {

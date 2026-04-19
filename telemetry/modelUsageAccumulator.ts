@@ -103,10 +103,10 @@ export async function getModelUsage(): Promise<ModelUsageData[]> {
         if (!calls && !costCents) continue
         results.push({
             model,
-            calls: calls ?? 0,
+            calls: calls!,
             inputTokens: inputTokens ?? 0,
             outputTokens: outputTokens ?? 0,
-            cost: (costCents ?? 0) / 100,
+            cost: costCents! / 100,
         })
     }
 

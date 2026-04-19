@@ -6,26 +6,20 @@ export interface SettingsProfile {
     lastName: string
 }
 
+/** A connected user profile (e.g. advisor, mentor, peer). */
 export interface SettingsConnectionProfile {
     id: string
     name: string | null
     email: string
 }
 
+/** A pending connection invite sent by or to the current user. */
 export interface SettingsPendingConnectionInvite {
     id: string
     inviteEmail: string
-    /**
-     * @deprecated App-specific alias kept for compatibility.
-     */
-    mentorEmail?: string
     createdAt: string
     status: string
 }
-
-// Backward-compatible aliases for app-specific naming.
-export type SettingsMentor = SettingsConnectionProfile
-export type SettingsPendingInvite = SettingsPendingConnectionInvite
 
 export interface SettingsPreferencesData {
     hideCompletedLessons: boolean
@@ -33,25 +27,11 @@ export interface SettingsPreferencesData {
     transparencyPreference: number
     themePreference: string
     /**
-     * App-defined preference payload. Platform does not enforce schema here.
+     * App-defined preference payload. The platform does not enforce schema here —
+     * apps store domain-specific defaults (e.g. lesson defaults, feature flags)
+     * under their own keys.
      */
     appDefaults?: Record<string, string | number | boolean | null>
-    /**
-     * @deprecated App-specific; kept for compatibility during migration.
-     */
-    lessonDefaultGrade?: string | null
-    /**
-     * @deprecated App-specific; kept for compatibility during migration.
-     */
-    lessonDefaultSubject?: string | null
-    /**
-     * @deprecated App-specific; kept for compatibility during migration.
-     */
-    lessonDefaultUnit?: string | null
-    /**
-     * @deprecated App-specific; kept for compatibility during migration.
-     */
-    lessonDefaultLocation?: string | null
 }
 
 export interface SettingsUsageMetric {
@@ -73,16 +53,9 @@ export interface SettingsAccountInfo {
     hasSubscription: boolean
     /**
      * Generic usage map keyed by app-defined capability IDs.
+     * Apps populate this with their own cap metrics (e.g. `{ "voice_minutes": { used: 12, limit: 60 } }`).
      */
     usageByKey?: Record<string, SettingsUsageMetric>
-    /**
-     * @deprecated App-specific usage shape; kept for compatibility.
-     */
-    usage?: {
-        voiceSessions: SettingsUsageMetric
-        voiceMinutes: SettingsUsageMetric
-        lessonAnalyses: SettingsUsageMetric
-    }
     weekResetsAt?: string
 }
 
@@ -107,7 +80,7 @@ export interface SaveProfileResult {
 
 export interface InviteResult {
     ok: boolean
-    invite?: SettingsPendingInvite
+    invite?: SettingsPendingConnectionInvite
     error?: string
 }
 
@@ -151,32 +124,39 @@ export interface SettingsConnectionState {
     pendingInvite: SettingsPendingConnectionInvite | null
 }
 
+/**
+ * Platform-level settings service contract.
+ *
+ * Apps implement this interface to wire their own API endpoints into the
+ * settings UI. All methods are async to support remote data sources.
+ *
+ * The connection/advisor methods model a generic user-to-user relationship:
+ * one user can invite another, enable an advisor role, and manage the link.
+ * Apps map these to their domain (mentor/mentee, coach/student, etc.).
+ */
 export interface SettingsServiceAdapter {
+    /** Fetch the current user's preferences. */
     getPreferences: () => Promise<SettingsPreferencesData | null>
+    /** Fetch the current user's connection and any pending invite. */
     getConnectionState: () => Promise<SettingsConnectionState>
+    /** Enable the advisor/mentor role for the current user. */
     enableAdvisorMode: () => Promise<BecomeMentorResult>
+    /** Disable the advisor/mentor role for the current user. */
     disableAdvisorMode: () => Promise<BecomeMentorResult>
+    /** Send a connection invite to another user by email. */
     sendConnectionInvite: (inviteEmail: string) => Promise<InviteResult>
+    /** Cancel the current user's outgoing connection invite. */
     cancelConnectionInvite: () => Promise<ActionResult>
+    /** Remove the current user's active connection. */
     removeConnection: () => Promise<ActionResult>
+    /** Reset the current user's usage period (e.g. for testing). */
     clearUsagePeriod: () => Promise<ClearWeeklyCapResult>
 
-    // Legacy app-specific API retained during migration.
-    getMenteeMentorState: () => Promise<{
-        mentor: SettingsMentor | null
-        pendingInvite: SettingsPendingInvite | null
-    }>
     getProfile: () => Promise<SettingsProfile | null>
     saveProfile: (profile: SettingsProfile) => Promise<SaveProfileResult>
-    becomeMentor: () => Promise<BecomeMentorResult>
-    deactivateMentor: () => Promise<BecomeMentorResult>
-    sendInvite: (mentorEmail: string) => Promise<InviteResult>
-    cancelInvite: () => Promise<ActionResult>
-    removeMentor: () => Promise<ActionResult>
     openBillingPortal: () => Promise<PortalResult>
     cancelSubscription: () => Promise<CancelSubscriptionResult>
     reactivateSubscription: () => Promise<ReactivateResult>
-    clearWeeklyCap: () => Promise<ClearWeeklyCapResult>
     syncAccountInfo: (force: boolean) => Promise<SettingsSyncResult>
     resolveTierBranding: (tierId?: string | null, tierName?: string | null) => SettingsTierBranding
     getBillingUiPolicy: (accountInfo: SettingsAccountInfo) => SettingsBillingUiPolicy
@@ -201,73 +181,23 @@ const EMPTY_ACCOUNT_INFO: SettingsAccountInfo = {
     hasSubscription: false
 }
 
+/** No-op adapter used as a safe default before the real adapter is wired up. */
 export const unconfiguredSettingsServiceAdapter: SettingsServiceAdapter = {
-    async getPreferences() {
-        return null
-    },
-    async getConnectionState() {
-        return { connection: null, pendingInvite: null }
-    },
-    async enableAdvisorMode() {
-        return { success: false, error: UNCONFIGURED_ERROR }
-    },
-    async disableAdvisorMode() {
-        return { success: false, error: UNCONFIGURED_ERROR }
-    },
-    async sendConnectionInvite() {
-        return { ok: false, error: UNCONFIGURED_ERROR }
-    },
-    async cancelConnectionInvite() {
-        return { ok: false, error: UNCONFIGURED_ERROR }
-    },
-    async removeConnection() {
-        return { ok: false, error: UNCONFIGURED_ERROR }
-    },
-    async clearUsagePeriod() {
-        return { success: false, error: UNCONFIGURED_ERROR }
-    },
-    async getMenteeMentorState() {
-        return { mentor: null, pendingInvite: null }
-    },
-    async getProfile() {
-        return null
-    },
-    async saveProfile() {
-        return { success: false, error: UNCONFIGURED_ERROR }
-    },
-    async becomeMentor() {
-        return unconfiguredSettingsServiceAdapter.enableAdvisorMode()
-    },
-    async deactivateMentor() {
-        return unconfiguredSettingsServiceAdapter.disableAdvisorMode()
-    },
-    async sendInvite() {
-        return unconfiguredSettingsServiceAdapter.sendConnectionInvite('')
-    },
-    async cancelInvite() {
-        return unconfiguredSettingsServiceAdapter.cancelConnectionInvite()
-    },
-    async removeMentor() {
-        return unconfiguredSettingsServiceAdapter.removeConnection()
-    },
-    async openBillingPortal() {
-        return { error: UNCONFIGURED_ERROR }
-    },
-    async cancelSubscription() {
-        return { success: false, error: UNCONFIGURED_ERROR }
-    },
-    async reactivateSubscription() {
-        return { success: false, error: UNCONFIGURED_ERROR }
-    },
-    async clearWeeklyCap() {
-        return unconfiguredSettingsServiceAdapter.clearUsagePeriod()
-    },
-    async syncAccountInfo() {
-        return { data: EMPTY_ACCOUNT_INFO, synced: false }
-    },
-    resolveTierBranding(tierId, tierName) {
-        return resolveSettingsTierBranding({ tierId, tierName })
-    },
+    async getPreferences() { return null },
+    async getConnectionState() { return { connection: null, pendingInvite: null } },
+    async enableAdvisorMode() { return { success: false, error: UNCONFIGURED_ERROR } },
+    async disableAdvisorMode() { return { success: false, error: UNCONFIGURED_ERROR } },
+    async sendConnectionInvite() { return { ok: false, error: UNCONFIGURED_ERROR } },
+    async cancelConnectionInvite() { return { ok: false, error: UNCONFIGURED_ERROR } },
+    async removeConnection() { return { ok: false, error: UNCONFIGURED_ERROR } },
+    async clearUsagePeriod() { return { success: false, error: UNCONFIGURED_ERROR } },
+    async getProfile() { return null },
+    async saveProfile() { return { success: false, error: UNCONFIGURED_ERROR } },
+    async openBillingPortal() { return { error: UNCONFIGURED_ERROR } },
+    async cancelSubscription() { return { success: false, error: UNCONFIGURED_ERROR } },
+    async reactivateSubscription() { return { success: false, error: UNCONFIGURED_ERROR } },
+    async syncAccountInfo() { return { data: EMPTY_ACCOUNT_INFO, synced: false } },
+    resolveTierBranding(tierId, tierName) { return resolveSettingsTierBranding({ tierId, tierName }) },
     getBillingUiPolicy() {
         return {
             hideSubscriptionWarnings: false,
