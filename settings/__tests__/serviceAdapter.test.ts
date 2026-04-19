@@ -2,18 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { unconfiguredSettingsServiceAdapter } from '../serviceAdapter'
 
 describe('platform settings adapter contracts', () => {
-    it('supports generic connection methods and legacy aliases', async () => {
-        const genericState = await unconfiguredSettingsServiceAdapter.getConnectionState()
-        const legacyState = await unconfiguredSettingsServiceAdapter.getMenteeMentorState()
-
-        expect(genericState).toEqual({ connection: null, pendingInvite: null })
-        expect(legacyState).toEqual({ mentor: null, pendingInvite: null })
+    it('supports generic connection methods', async () => {
+        const state = await unconfiguredSettingsServiceAdapter.getConnectionState()
+        expect(state).toEqual({ connection: null, pendingInvite: null })
 
         await expect(unconfiguredSettingsServiceAdapter.enableAdvisorMode()).resolves.toEqual({
-            success: false,
-            error: 'Settings service adapter is not configured'
-        })
-        await expect(unconfiguredSettingsServiceAdapter.becomeMentor()).resolves.toEqual({
             success: false,
             error: 'Settings service adapter is not configured'
         })
@@ -24,15 +17,19 @@ describe('platform settings adapter contracts', () => {
             ok: false,
             error: 'Settings service adapter is not configured'
         })
-        await expect(unconfiguredSettingsServiceAdapter.sendInvite('teacher@example.com')).resolves.toEqual({
+        await expect(unconfiguredSettingsServiceAdapter.cancelConnectionInvite()).resolves.toEqual({
             ok: false,
             error: 'Settings service adapter is not configured'
         })
-        await expect(unconfiguredSettingsServiceAdapter.clearUsagePeriod()).resolves.toEqual({
+        await expect(unconfiguredSettingsServiceAdapter.removeConnection()).resolves.toEqual({
+            ok: false,
+            error: 'Settings service adapter is not configured'
+        })
+        await expect(unconfiguredSettingsServiceAdapter.disableAdvisorMode()).resolves.toEqual({
             success: false,
             error: 'Settings service adapter is not configured'
         })
-        await expect(unconfiguredSettingsServiceAdapter.clearWeeklyCap()).resolves.toEqual({
+        await expect(unconfiguredSettingsServiceAdapter.clearUsagePeriod()).resolves.toEqual({
             success: false,
             error: 'Settings service adapter is not configured'
         })
@@ -108,20 +105,7 @@ describe('platform settings adapter contracts', () => {
         })
     })
 
-    it('supports legacy deactivation/removal aliases and no-op invalidation hooks', async () => {
-        await expect(unconfiguredSettingsServiceAdapter.deactivateMentor()).resolves.toEqual({
-            success: false,
-            error: 'Settings service adapter is not configured'
-        })
-        await expect(unconfiguredSettingsServiceAdapter.cancelInvite()).resolves.toEqual({
-            ok: false,
-            error: 'Settings service adapter is not configured'
-        })
-        await expect(unconfiguredSettingsServiceAdapter.removeMentor()).resolves.toEqual({
-            ok: false,
-            error: 'Settings service adapter is not configured'
-        })
-
+    it('provides no-op invalidation hooks', () => {
         expect(() => unconfiguredSettingsServiceAdapter.refreshUserStatus()).not.toThrow()
         expect(() => unconfiguredSettingsServiceAdapter.invalidateAccountInfo()).not.toThrow()
         expect(() => unconfiguredSettingsServiceAdapter.invalidateSubscriptionWarning()).not.toThrow()

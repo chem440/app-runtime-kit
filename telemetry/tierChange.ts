@@ -9,26 +9,33 @@ export type TierChangeReason =
     | 'admin_sync'
     | 'migration'
 
+/**
+ * Determine the business reason for a tier change.
+ *
+ * @param fromTier - The user's previous tier ID (null if this is a new account).
+ * @param toTier - The user's new tier ID.
+ * @param isReactivation - Pass true when a cancelled subscription is being reactivated.
+ * @param tierRanks - Map of upper-cased tier ID to numeric rank. Higher rank = higher tier.
+ *   Tiers not in the map default to rank 0 (free/base tier). Apps pass their own rank
+ *   map so the kit stays free of hardcoded product tier names.
+ * @param freeBaseTierId - Upper-cased tier ID that represents the free/base tier (rank 0).
+ *   Downgrading to this tier is classified as churn instead of a regular downgrade.
+ *   Defaults to `'LIGHT'` for backwards compatibility; supply your app's free tier name.
+ */
 export function determineTierChangeReason(
     fromTier: string | null,
     toTier: string,
-    isReactivation = false
+    isReactivation = false,
+    tierRanks: Record<string, number> = {},
+    freeBaseTierId = 'LIGHT'
 ): TierChangeReason {
     if (isReactivation) return 'reactivation'
     if (!fromTier) return 'signup'
 
-    const tierRanks: Record<string, number> = {
-        PARTNER: 0,
-        LIGHT: 0,
-        PRO: 1,
-        PREMIUM: 2,
-        ENTERPRISE: 3,
-    }
-
     const fromRank = tierRanks[fromTier.toUpperCase()] ?? 0
     const toRank = tierRanks[toTier.toUpperCase()] ?? 0
 
-    if (toTier.toUpperCase() === 'LIGHT' && fromRank > 0) return 'churn'
+    if (toTier.toUpperCase() === freeBaseTierId.toUpperCase() && fromRank > 0) return 'churn'
     if (toRank > fromRank) return 'upgrade'
     if (toRank < fromRank) return 'downgrade'
 

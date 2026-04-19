@@ -1,40 +1,63 @@
-function getPacificOffsetMs(date: Date): number {
+const DEFAULT_TZ = 'America/Los_Angeles'
+
+function getZoneOffsetMs(date: Date, tz: string): number {
     const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Los_Angeles',
+        timeZone: tz,
         hour: 'numeric',
         hourCycle: 'h23',
     })
 
-    const ptParts = formatter.formatToParts(date)
-    const ptHour = parseInt(ptParts.find(part => part.type === 'hour')?.value || '0', 10)
+    const parts = formatter.formatToParts(date)
+    const zoneHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10)
     const utcHour = date.getUTCHours()
 
-    let offsetHours = ptHour - utcHour
+    let offsetHours = zoneHour - utcHour
     if (offsetHours > 12) offsetHours -= 24
     if (offsetHours < -12) offsetHours += 24
 
     return offsetHours * 60 * 60 * 1000
 }
 
-export function getWeekStartPT(date: Date = new Date()): Date {
-    const ptOffsetMs = getPacificOffsetMs(date)
-    const ptTime = date.getTime() + ptOffsetMs
-    const ptDate = new Date(ptTime)
-    const dayOfWeek = ptDate.getUTCDay()
+/**
+ * Return the start of the calendar week (Sunday at midnight) in the given timezone.
+ *
+ * @param date - The reference date (defaults to now).
+ * @param tz - IANA timezone string (defaults to `'America/Los_Angeles'`).
+ */
+export function getWeekStartInZone(date: Date = new Date(), tz: string = DEFAULT_TZ): Date {
+    const offsetMs = getZoneOffsetMs(date, tz)
+    const zoneTime = date.getTime() + offsetMs
+    const zoneDate = new Date(zoneTime)
+    const dayOfWeek = zoneDate.getUTCDay()
 
-    const sundayPT = new Date(ptDate)
-    sundayPT.setUTCDate(sundayPT.getUTCDate() - dayOfWeek)
-    sundayPT.setUTCHours(0, 0, 0, 0)
+    const sundayZone = new Date(zoneDate)
+    sundayZone.setUTCDate(sundayZone.getUTCDate() - dayOfWeek)
+    sundayZone.setUTCHours(0, 0, 0, 0)
 
-    const sundayPtOffsetMs = getPacificOffsetMs(sundayPT)
-    return new Date(sundayPT.getTime() - sundayPtOffsetMs)
+    const sundayOffsetMs = getZoneOffsetMs(sundayZone, tz)
+    return new Date(sundayZone.getTime() - sundayOffsetMs)
 }
 
-export function getWeekKey(date: Date = new Date()): string {
-    const weekStart = getWeekStartPT(date)
+/**
+ * Return the ISO week key (e.g. `'2026-W15'`) for the calendar week containing `date`,
+ * anchored to the given timezone.
+ *
+ * @param date - The reference date (defaults to now).
+ * @param tz - IANA timezone string (defaults to `'America/Los_Angeles'`).
+ */
+export function getWeekKey(date: Date = new Date(), tz: string = DEFAULT_TZ): string {
+    const weekStart = getWeekStartInZone(date, tz)
     const year = weekStart.getUTCFullYear()
     const startOfYear = new Date(Date.UTC(year, 0, 1))
     const days = Math.floor((weekStart.getTime() - startOfYear.getTime()) / 86400000)
     const weekNum = Math.ceil((days + startOfYear.getUTCDay() + 1) / 7)
     return `${year}-W${String(weekNum).padStart(2, '0')}`
+}
+
+/**
+ * @deprecated Use `getWeekStartInZone` instead.
+ * Kept for backwards compatibility — defaults to Pacific Time.
+ */
+export function getWeekStartPT(date: Date = new Date()): Date {
+    return getWeekStartInZone(date, DEFAULT_TZ)
 }
