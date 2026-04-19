@@ -1,5 +1,5 @@
 export * from './audio';
-export * from './cache';
+export * from './kv';
 export * from './reports';
 export * from './services';
 export * from './settings';

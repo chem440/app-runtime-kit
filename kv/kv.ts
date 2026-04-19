@@ -1,4 +1,4 @@
-import type { KVAdapter } from '../cache/types'
+import type { KVAdapter } from './types'
 import { getMockKV, resetMockKV, shouldUseMockKV } from './mock'
 import { recordKVOp } from './metrics'
 
@@ -137,4 +137,4 @@ export const kv = new Proxy({} as KVAdapter, {
 })
 
 export { getMockKV, resetMockKV, shouldUseMockKV }
-export type { KVAdapter, KVPipeline } from '../cache/types'
+export type { KVAdapter, KVPipeline } from './types'

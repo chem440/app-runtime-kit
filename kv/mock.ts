@@ -1,4 +1,4 @@
-import type { KVAdapter, KVPipeline } from '../cache/types'
+import type { KVAdapter, KVPipeline } from './types'
 
 interface MockStore {
   [key: string]: any

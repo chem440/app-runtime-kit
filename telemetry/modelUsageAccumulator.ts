@@ -1,4 +1,4 @@
-import { kv } from '../cache/kv'
+import { kv } from '../kv/kv'
 
 const MODEL_TTL_SECONDS = 7 * 24 * 60 * 60
 

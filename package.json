@@ -1,6 +1,6 @@
 {
   "name": "@app-runtime-kit/core",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "type": "module",
   "sideEffects": [
@@ -25,10 +25,6 @@
     ".": "./dist/index.js",
     "./audio": "./dist/audio/index.js",
     "./audio/RecordingOverlay": "./dist/audio/RecordingOverlay.js",
-    "./cache": "./dist/cache/index.js",
-    "./cache/kv": "./dist/cache/kv.js",
-    "./cache/mock": "./dist/cache/mock.js",
-    "./cache/metrics": "./dist/cache/metrics.js",
     "./kv": "./dist/kv/index.js",
     "./kv/kv": "./dist/kv/kv.js",
     "./kv/mock": "./dist/kv/mock.js",

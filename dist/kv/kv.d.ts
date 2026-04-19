@@ -1,4 +1,4 @@
-import type { KVAdapter } from '../cache/types';
+import type { KVAdapter } from './types';
 import { getMockKV, resetMockKV, shouldUseMockKV } from './mock';
 /**
  * Register the cache client implementation.
@@ -16,4 +16,4 @@ export declare function initKV(client: KVAdapter): void;
  */
 export declare const kv: KVAdapter;
 export { getMockKV, resetMockKV, shouldUseMockKV };
-export type { KVAdapter, KVPipeline } from '../cache/types';
+export type { KVAdapter, KVPipeline } from './types';

@@ -1,4 +1,4 @@
-import type { KVAdapter, KVPipeline } from '../cache/types';
+import type { KVAdapter, KVPipeline } from './types';
 declare class MockKV implements KVAdapter {
     private store;
     private expiry;
