@@ -23,8 +23,6 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
-    "./audio": "./dist/audio/index.js",
-    "./audio/RecordingOverlay": "./dist/audio/RecordingOverlay.js",
     "./kv": "./dist/kv/index.js",
     "./telemetry": "./dist/telemetry/index.js",
     "./telemetry/keys": "./dist/telemetry/keys.js",
