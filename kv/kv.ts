@@ -1,5 +1,6 @@
 import type { KVAdapter } from './types'
 import { getMockKV, resetMockKV, shouldUseMockKV } from './mock'
+import { getNoopKV, shouldDisableCache } from './noop'
 import { recordKVOp } from './metrics'
 
 const TRACKED_KV_OPS = new Set([
@@ -77,6 +78,10 @@ export function initKV(client: KVAdapter): void {
 
 function getInstance(): KVAdapter {
     if (!_instance) {
+        if (shouldDisableCache()) {
+            _instance = getNoopKV()
+            return _instance
+        }
         if (shouldUseMockKV()) {
             _instance = getMockKV()
             return _instance
@@ -137,4 +142,5 @@ export const kv = new Proxy({} as KVAdapter, {
 })
 
 export { getMockKV, resetMockKV, shouldUseMockKV }
+export { getNoopKV, shouldDisableCache }
 export type { KVAdapter, KVPipeline } from './types'

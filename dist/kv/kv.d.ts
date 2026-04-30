@@ -1,5 +1,6 @@
 import type { KVAdapter } from './types';
 import { getMockKV, resetMockKV, shouldUseMockKV } from './mock';
+import { getNoopKV, shouldDisableCache } from './noop';
 /**
  * Register the cache client implementation.
  * Call once at application startup before any kv access.
@@ -16,4 +17,5 @@ export declare function initKV(client: KVAdapter): void;
  */
 export declare const kv: KVAdapter;
 export { getMockKV, resetMockKV, shouldUseMockKV };
+export { getNoopKV, shouldDisableCache };
 export type { KVAdapter, KVPipeline } from './types';

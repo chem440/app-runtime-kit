@@ -1,4 +1,5 @@
 import { getMockKV, resetMockKV, shouldUseMockKV } from './mock.js';
+import { getNoopKV, shouldDisableCache } from './noop.js';
 import { recordKVOp } from './metrics.js';
 const TRACKED_KV_OPS = new Set([
     'get', 'set', 'del', 'keys', 'mget',
@@ -65,6 +66,10 @@ export function initKV(client) {
 }
 function getInstance() {
     if (!_instance) {
+        if (shouldDisableCache()) {
+            _instance = getNoopKV();
+            return _instance;
+        }
         if (shouldUseMockKV()) {
             _instance = getMockKV();
             return _instance;
@@ -120,3 +125,4 @@ export const kv = new Proxy({}, {
     },
 });
 export { getMockKV, resetMockKV, shouldUseMockKV };
+export { getNoopKV, shouldDisableCache };
