@@ -70,6 +70,12 @@ const cached = await kv.get<MyType>('some:key')
 
 The `kv` export is an instrumented proxy. All operations are tracked via `recordKVOp` and accessible via `getKVMetricsSnapshot()`.
 
+### Disabling cache entirely
+
+Set `DISABLE_CACHE=true` to replace all KV operations with a no-op adapter. Every read returns `null`, every write silently succeeds. Useful when your KV provider is unavailable or you want to run the app without any cache dependency.
+
+The no-op adapter activates automatically in `getInstance()` before any other adapter check. App code does not need changes — all `kv.*` calls continue to work, they just do nothing.
+
 ### Tests
 
 Set `MOCK_CACHE=1` in the test environment. The kit will auto-activate `MockKV` (in-memory, no real KV required). Or import `getMockKV()` explicitly.
