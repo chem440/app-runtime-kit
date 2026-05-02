@@ -16,14 +16,16 @@ export function SWRProvider({ children }: { children: ReactNode }) {
     return (
         <SWRConfig value={{
             revalidateOnFocus: false,
-            revalidateOnReconnect: false,
+            revalidateOnReconnect: true,
+            refreshWhenHidden: false,
+            refreshWhenOffline: false,
             dedupingInterval: DEDUPING_INTERVALS.PROFILE,
             onErrorRetry: (error, _key, _config, revalidate, { retryCount }) => {
                 const status = getHttpStatus(error)
                 if (status === 401) return
                 if (status === 403) return
                 if (retryCount >= 3) return
-                setTimeout(() => revalidate({ retryCount }), 5000 * Math.pow(2, retryCount))
+                setTimeout(() => revalidate({ retryCount }), Math.min(1000 * Math.pow(2, retryCount), 8000))
             }
         }}>
             {children}

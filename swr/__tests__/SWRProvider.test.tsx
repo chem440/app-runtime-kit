@@ -59,17 +59,18 @@ describe('SWRProvider', () => {
     setTimeoutSpy.mockRestore()
   })
 
-  it('uses exponential backoff when retrying non-auth failures', () => {
+  it('uses exponential backoff capped at 8s when retrying non-auth failures', () => {
     vi.useFakeTimers()
     let captured: ConfigProbe | undefined
     const revalidate = vi.fn()
 
     render(wrap(<Probe onReady={(config) => { captured = config }} />))
 
+    // retryCount 2 → min(1000 * 2^2, 8000) = 4000ms
     captured?.onErrorRetry?.({ status: 500 }, 'key', {}, revalidate, { retryCount: 2, dedupe: false })
 
     expect(revalidate).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(20_000)
+    vi.advanceTimersByTime(4_000)
     expect(revalidate).toHaveBeenCalledWith({ retryCount: 2 })
 
     vi.useRealTimers()
